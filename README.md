@@ -3,8 +3,8 @@
 ## 📋 Datos Académicos
 * **Materia:** Sistemas de Información 1
 * **Docente:** MSc. Angélica Garzón Cuéllar
-* **Grupo N°:** [Inserta el número de tu grupo]
-* **Semestre:** 2-2025
+* **Grupo N°:** [1]
+* **Semestre:** 1-2026
 
 ## 👥 Integrantes del Equipo
 1. [Amador Oña Harold Emerson] - [223041491]
@@ -13,9 +13,9 @@
 
 ## 🚀 Tecnologías Utilizadas
 * **Backend:** PHP (Laravel)
-* **Frontend:** Laravel Blade / TailwindCSS
+* **Frontend:** Laravel Breeze / React y TailwindCSS
 * **Base de Datos:** PostgreSQL
-* **Despliegue en la Nube:** Azure / AWS / Render
+* **Despliegue en la Nube:** Render
 
 ## 🔗 Acceso al Repositorio
 * **URL del Repositorio:** https://github.com/dilom21/GestionCUP_Ficct
