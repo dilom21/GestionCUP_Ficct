@@ -24,4 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/home', function(){
+    return "Bienvenido a la pagina de inicio";
+});
 require __DIR__.'/auth.php';
+
+
