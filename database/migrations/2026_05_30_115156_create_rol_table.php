@@ -9,12 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
 {
     Schema::create('rol', function (Blueprint $table) {
-        $table->increments('id');
-        $table->string('nombre', 100)->unique();
-        $table->string('descripcion', 255)->nullable();
+        // En lugar de $table->id(); pon esto:
+        $table->id('id_rol'); 
+        
+        $table->string('nombre');
+        // $table->timestamps(); // (Mantenlo o bórralo según tu diseño)
     });
 }
 
