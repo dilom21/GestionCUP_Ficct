@@ -6,28 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-{
-    Schema::create('funcion', function (Blueprint $table) {
-        $table->increments('id');
-        $table->string('nombre', 100);
-        $table->string('descripcion', 255)->nullable();
-        $table->string('permiso', 100)->unique();
+    {
+        Schema::create('funcion', function (Blueprint $table) {
+            $table->id(); // Crea la llave primaria estándar llamada 'id'
+            $table->string('nombre', 100);
+            $table->string('descripcion', 255)->nullable();
+            $table->string('permiso', 100)->unique();
+            
+            // Llave foránea hacia modulo (asegúrate de que tabla modulo también use $table->id())
+            $table->foreignId('id_modulo')->constrained('modulo')->onDelete('cascade');
+        });
+    }
 
-        $table->integer('id_modulo');
-
-        $table->foreign('id_modulo')
-            ->references('id')
-            ->on('modulo')
-            ->onDelete('cascade');
-    });
-}
-
-public function down(): void
-{
-    Schema::dropIfExists('funcion');
-}
+    public function down(): void
+    {
+        Schema::dropIfExists('funcion');
+    }
 };

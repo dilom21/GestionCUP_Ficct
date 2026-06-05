@@ -6,22 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up()
-{
-    Schema::create('rol', function (Blueprint $table) {
-        // En lugar de $table->id(); pon esto:
-        $table->id('id_rol'); 
-        
-        $table->string('nombre');
-        // $table->timestamps(); // (Mantenlo o bórralo según tu diseño)
-    });
-}
+    public function up(): void
+    {
+        Schema::create('rol', function (Blueprint $table) {
+            $table->id(); // Crea la llave primaria estándar llamada 'id'
+            $table->string('nombre', 100);
+            $table->string('descripcion', 255)->nullable();
+            $table->timestamps();
+        });
+    }
 
-public function down(): void
-{
-    Schema::dropIfExists('rol');
-}
+    public function down(): void
+    {
+        Schema::dropIfExists('rol');
+    }
 };

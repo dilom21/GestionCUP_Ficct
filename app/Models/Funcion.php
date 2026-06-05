@@ -4,21 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Rol extends Model
+class Funcion extends Model
 {
-    protected $table = 'rol';
+    protected $table = 'funcion';
     
     // Eliminamos protected $primaryKey porque Laravel ya asume que es 'id'
     
-    public $timestamps = true;
+    // Lo pongo en false porque en tu migración no agregaste $table->timestamps()
+    public $timestamps = false; 
 
     protected $fillable = [
         'nombre',
         'descripcion',
+        'permiso',
+        'id_modulo'
     ];
-
-    public function usuarios()
-    {
-        return $this->hasMany(Usuario::class, 'id_rol');
-    }
 }
