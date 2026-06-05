@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from '@/Components/Navbar';
+import Navbar from '@/Components/navigation/Navbar';
 
 export default function PostulanteLayout({ children }) {
     return (
