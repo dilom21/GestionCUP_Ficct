@@ -20,7 +20,7 @@ function Navbar({ gestion }) {
                     {/* Logo + nombre */}
                     <a href="#hero" className="flex items-center gap-3 group">
                         <img
-                            src="/imagenes/Logo-Ficct.png"
+                            src="/Imagenes/Logo-Ficct.png"
                             alt="Logo FICCT"
                             className="h-10 w-10 lg:h-12 lg:w-12 object-contain transition-transform group-hover:scale-105"
                         />
@@ -186,7 +186,7 @@ function Hero({ gestion }) {
                         <div className="relative w-56 h-56 sm:w-64 sm:h-64 lg:w-80 lg:h-80">
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-2xl"></div>
                             <img
-                                src="/imagenes/Logo-Ficct.png"
+                                src="/Imagenes/Logo-Ficct.png"
                                 alt="Logo FICCT"
                                 className="relative w-full h-full object-contain drop-shadow-2xl animate-float"
                             />
@@ -221,32 +221,32 @@ const carrerasData = [
         slug: 'informatica',
         nombre: 'Ingeniería Informática',
         descripcion: 'Forma profesionales en desarrollo de software, inteligencia artificial, bases de datos y gestión de tecnologías de información para impulsar la transformación digital.',
-        logo: '/imagenes/Carreras/Informatica.png',
-        malla: '/imagenes/Mallas/Informatica.png',
+        logo: '/Imagenes/Carreras/Informatica.png',
+        malla: '/Imagenes/Mallas/Informatica.png',
         color: 'from-blue-600 to-blue-800',
     },
     {
         slug: 'sistemas',
         nombre: 'Ingeniería en Sistemas',
         descripcion: 'Capacita en diseño, implementación y administración de sistemas informáticos complejos, redes corporativas y soluciones tecnológicas integrales.',
-        logo: '/imagenes/Carreras/Sistemas.png',
-        malla: '/imagenes/Mallas/Sistemas.png',
+        logo: '/Imagenes/Carreras/Sistemas.png',
+        malla: '/Imagenes/Mallas/Sistemas.png',
         color: 'from-cyan-600 to-blue-700',
     },
     {
         slug: 'redes',
         nombre: 'Ingeniería en Redes y Telecomunicaciones',
         descripcion: 'Prepara especialistas en infraestructura de redes, comunicaciones, seguridad informática y tecnologías de telecomunicación de última generación.',
-        logo: '/imagenes/Carreras/Redes.png',
-        malla: '/imagenes/Mallas/Redes.png',
+        logo: '/Imagenes/Carreras/Redes.png',
+        malla: '/Imagenes/Mallas/Redes.png',
         color: 'from-blue-700 to-indigo-800',
     },
     {
         slug: 'robotica',
         nombre: 'Ingeniería en Robótica',
         descripcion: 'Forma ingenieros en automatización, robótica industrial, sistemas embebidos, IoT y control de procesos productivos con visión tecnológica.',
-        logo: '/imagenes/Carreras/Robotica.png',
-        malla: '/imagenes/Mallas/Robotica.png',
+        logo: '/Imagenes/Carreras/Robotica.png',
+        malla: '/Imagenes/Mallas/Robotica.png',
         color: 'from-indigo-600 to-blue-800',
     },
 ];
@@ -712,7 +712,7 @@ function Footer() {
                     <div className="sm:col-span-2 lg:col-span-1">
                         <div className="flex items-center gap-3 mb-4">
                             <img
-                                src="/imagenes/Logo-Ficct.png"
+                                src="/Imagenes/Logo-Ficct.png"
                                 alt="Logo FICCT"
                                 className="h-10 w-10 object-contain"
                             />
