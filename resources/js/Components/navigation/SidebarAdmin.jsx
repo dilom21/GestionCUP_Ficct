@@ -3,8 +3,9 @@ import { useState } from 'react';
 
 export default function SidebarAdmin() {
     const postulacionesActiva = route().current('admin.postulaciones.docentes') || route().current('admin.postulaciones.docentes.show') || route().current('admin.postulaciones.docentes.*');
+    const postulacionesPostulantesActiva = route().current('admin.postulaciones.postulantes') || route().current('admin.postulaciones.postulantes.show') || route().current('admin.postulaciones.postulantes.*');
     const bitacoraActiva = route().current('admin.bitacora');
-    const [postulantesAbierto, setPostulantesAbierto] = useState(postulacionesActiva);
+    const [postulantesAbierto, setPostulantesAbierto] = useState(postulacionesActiva || postulacionesPostulantesActiva);
     const [seguridadAbierta, setSeguridadAbierta] = useState(bitacoraActiva);
 
     const menuItems = [
@@ -28,6 +29,10 @@ export default function SidebarAdmin() {
                 {
                     label: 'Postulaciones Docentes',
                     href: route('admin.postulaciones.docentes'),
+                },
+                {
+                    label: 'Postulaciones de Postulantes',
+                    href: route('admin.postulaciones.postulantes'),
                 },
             ],
         },
@@ -127,7 +132,7 @@ export default function SidebarAdmin() {
                         if (item.children) {
                             const esPostulantes = item.label === 'Postulantes y Requisitos';
                             const abierto = esPostulantes ? postulantesAbierto : seguridadAbierta;
-                            const activo = esPostulantes ? postulacionesActiva : bitacoraActiva;
+                            const activo = esPostulantes ? (postulacionesActiva || postulacionesPostulantesActiva) : bitacoraActiva;
                             const toggle = esPostulantes
                                 ? () => setPostulantesAbierto((a) => !a)
                                 : () => setSeguridadAbierta((a) => !a);

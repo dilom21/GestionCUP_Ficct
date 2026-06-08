@@ -19,11 +19,14 @@ class SupabaseStorageService
     ];
     private const TAMANIO_MAXIMO = 20 * 1024 * 1024; // 20 MB
 
+    private string $bucketPostulantes;
+
     public function __construct()
     {
         $this->supabaseUrl = rtrim(env('SUPABASE_URL'), '/');
         $this->serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY');
         $this->bucket = env('SUPABASE_STORAGE_BUCKET');
+        $this->bucketPostulantes = env('SUPABASE_STORAGE_BUCKET_POSTULANTES');
     }
 
     /**
@@ -89,9 +92,67 @@ class SupabaseStorageService
     /**
      * Obtener URL pública de un archivo en Supabase Storage.
      */
+    public function subirPostulante(UploadedFile $archivo, int $idPostulacion, string $tipoDocumento): array
+    {
+        $mimeType = $archivo->getMimeType();
+        if (!in_array($mimeType, self::TIPOS_PERMITIDOS, true)) {
+            throw new \Exception("Tipo de archivo no permitido: {$mimeType}");
+        }
+
+        $tamanio = $archivo->getSize();
+        if ($tamanio > self::TAMANIO_MAXIMO) {
+            throw new \Exception("El archivo excede el tamaño máximo de 20 MB.");
+        }
+
+        $extension = $archivo->getClientOriginalExtension();
+        $timestamp = now()->timestamp;
+        $nombreArchivo = "{$tipoDocumento}_{$timestamp}.{$extension}";
+        $rutaCompleta = "postulaciones-postulantes/{$idPostulacion}/{$nombreArchivo}";
+
+        $contenido = file_get_contents($archivo->getRealPath());
+        $url = "{$this->supabaseUrl}/storage/v1/object/{$this->bucketPostulantes}/{$rutaCompleta}";
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$this->serviceRoleKey}",
+            'Content-Type' => $mimeType,
+        ])->send('PUT', $url, ['body' => $contenido]);
+
+        if ($response->failed()) {
+            Log::error('Error al subir archivo a Supabase Storage (postulantes).', [
+                'ruta' => $rutaCompleta,
+                'status' => $response->status(),
+                'response' => $response->body(),
+            ]);
+            throw new \Exception("Error al subir el archivo a Supabase Storage.");
+        }
+
+        return [
+            'ruta_archivo' => $rutaCompleta,
+            'nombre_archivo' => $nombreArchivo,
+            'mime_type' => $mimeType,
+            'tamanio' => $tamanio,
+        ];
+    }
+
     public function getUrlPublica(string $rutaArchivo): string
     {
         return "{$this->supabaseUrl}/storage/v1/object/public/{$this->bucket}/{$rutaArchivo}";
+    }
+
+    public function getUrlPublicaPostulante(string $rutaArchivo): string
+    {
+        return "{$this->supabaseUrl}/storage/v1/object/public/{$this->bucketPostulantes}/{$rutaArchivo}";
+    }
+
+    public function descargarPostulante(string $rutaArchivo)
+    {
+        $url = "{$this->supabaseUrl}/storage/v1/object/{$this->bucketPostulantes}/{$rutaArchivo}";
+        $response = Http::withHeaders(['Authorization' => "Bearer {$this->serviceRoleKey}"])->get($url);
+        if ($response->failed()) {
+            Log::error('Error al descargar archivo de postulante.', ['ruta' => $rutaArchivo, 'status' => $response->status()]);
+            throw new \Exception('El archivo no está disponible.');
+        }
+        return $response;
     }
 
     public function descargar(string $rutaArchivo)
