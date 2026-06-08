@@ -7,16 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 class Funcion extends Model
 {
     protected $table = 'funcion';
-    
-    // Eliminamos protected $primaryKey porque Laravel ya asume que es 'id'
-    
-    // Lo pongo en false porque en tu migración no agregaste $table->timestamps()
-    public $timestamps = false; 
+
+    public $timestamps = false;
 
     protected $fillable = [
         'nombre',
         'descripcion',
         'permiso',
-        'id_modulo'
+        'id_modulo',
     ];
+
+    public function modulo()
+    {
+        return $this->belongsTo(Modulo::class, 'id_modulo', 'id');
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Rol::class, 'rol_funcion', 'id_funcion', 'id_rol')
+            ->withPivot('descripcion');
+    }
 }

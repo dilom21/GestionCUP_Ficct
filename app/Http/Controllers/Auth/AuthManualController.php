@@ -76,13 +76,17 @@ class AuthManualController extends Controller
             ])->onlyInput('correo');
         }
 
-        // 6. Guardar datos en sesión
+        // 6. Obtener permisos del rol
+        $permisos = $rol->getPermisosArray();
+
+        // 7. Guardar datos en sesión (incluyendo permisos)
         session([
-            'usuario_id'        => $usuario->id,
-            'usuario_nombre'    => $usuario->nombre . ' ' . $usuario->apellidos,
-            'usuario_correo'    => $usuario->correo,
-            'usuario_rol_id'    => $rol->id,
+            'usuario_id'         => $usuario->id,
+            'usuario_nombre'     => $usuario->nombre . ' ' . $usuario->apellidos,
+            'usuario_correo'     => $usuario->correo,
+            'usuario_rol_id'     => $rol->id,
             'usuario_rol_nombre' => $rol->nombre,
+            'usuario_permisos'   => $permisos,
         ]);
 
         session()->regenerate();

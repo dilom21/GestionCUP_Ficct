@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthManualController;
+use App\Http\Controllers\RolController;
+use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\CarreraController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -62,4 +65,59 @@ Route::middleware('auth.sesion')->group(function () {
         }
         return Inertia::render('Director/Dashboard');
     })->name('director.dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU02: Gestión de Usuarios y Roles
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
+    Route::post('/roles', [RolController::class, 'store'])->name('roles.store');
+    Route::put('/roles/{rol}', [RolController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{rol}', [RolController::class, 'destroy'])->name('roles.destroy');
+    Route::get('/roles/{rol}/funciones', [RolController::class, 'getFunciones'])->name('roles.funciones');
+
+    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
+    Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
+    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
+    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU04: Gestión de Carreras
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/carreras', [CarreraController::class, 'index'])->name('carreras.index');
+    Route::post('/carreras', [CarreraController::class, 'store'])->name('carreras.store');
+    Route::put('/carreras/{carrera}', [CarreraController::class, 'update'])->name('carreras.update');
+    Route::delete('/carreras/{carrera}', [CarreraController::class, 'destroy'])->name('carreras.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU06: Gestión de Materias
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/materias', [App\Http\Controllers\Materias\MateriaController::class, 'index'])->name('materias.index');
+    Route::post('/materias', [App\Http\Controllers\Materias\MateriaController::class, 'store'])->name('materias.store');
+    Route::put('/materias/{materium}', [App\Http\Controllers\Materias\MateriaController::class, 'update'])->name('materias.update');
+    Route::delete('/materias/{materium}', [App\Http\Controllers\Materias\MateriaController::class, 'destroy'])->name('materias.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU10: Gestionar Pagos - Stripe Checkout
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('financiero')->group(function () {
+        Route::get('/pagos', [App\Http\Controllers\Financiero\PagoController::class, 'index'])
+            ->name('pagos.index');
+
+        Route::post('/pago/crear-sesion', [App\Http\Controllers\Financiero\PagoController::class, 'createCheckoutSession'])
+            ->name('pago.crear-sesion');
+
+        Route::get('/pago/exito', [App\Http\Controllers\Financiero\PagoController::class, 'pagoExito'])
+            ->name('pago.exito');
+
+        Route::get('/pago/cancelado', [App\Http\Controllers\Financiero\PagoController::class, 'pagoCancelado'])
+            ->name('pago.cancelado');
+    });
 });

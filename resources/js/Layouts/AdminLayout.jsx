@@ -1,7 +1,20 @@
 import Navbar from '@/Components/navigation/Navbar';
 import SidebarAdmin from '@/Components/navigation/SidebarAdmin';
+import { usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { sincronizarPermisos } from '@/Helpers/Permisos';
 
 export default function AdminLayout({ children }) {
+    const { props } = usePage();
+
+    useEffect(() => {
+        // Sincronizar permisos desde Inertia a sessionStorage cuando cambian
+        const permisos = props?.auth?.usuario_permisos;
+        if (permisos) {
+            sincronizarPermisos(permisos);
+        }
+    }, [props?.auth?.usuario_permisos]);
+
     return (
         <div className="flex min-h-screen bg-slate-50">
             <SidebarAdmin />

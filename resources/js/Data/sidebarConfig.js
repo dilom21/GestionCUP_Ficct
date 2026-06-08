@@ -1,0 +1,200 @@
+/**
+ * Configuración centralizada de los módulos y botones de la barra lateral.
+ *
+ * Cada módulo define:
+ * - label: nombre para mostrar en sidebar y permisos
+ * - entidad: identificador único para permisos (ej: 'usuarios', 'dashboard')
+ * - color: color del tema para la UI de permisos
+ * - icon: emoji representativo para UI de permisos
+ * - href: ruta de navegación (para SidebarAdmin)
+ * - isDropdown: si contiene sub-items
+ * - children: sub-items del menú (botones dentro del módulo)
+ *
+ * IMPORTANTE:
+ * - Los items en `children` aparecerán automáticamente en "Permisos por Módulo"
+ *   al crear/editar un rol.
+ * - Si agregas un nuevo botón aquí, aparecerá en la sección de permisos.
+ * - Mientras los children estén vacíos no se mostrará nada dentro del módulo.
+ */
+
+const sidebarModules = [
+  {
+    label: 'Dashboard',
+    entidad: 'dashboard',
+    icon: '📊',
+    color: 'emerald',
+    href: '#',
+    isDropdown: false,
+    permisoLeer: 'dashboard.leer',
+    children: [], // ← mientras esté vacío no habrá items en permisos
+  },
+  {
+    label: 'Postulantes y Requisitos',
+    entidad: 'postulantes',
+    icon: '📋',
+    color: 'amber',
+    href: '#',
+    isDropdown: false,
+    permisoLeer: 'postulantes.leer',
+    children: [],
+  },
+  {
+    label: 'Pagos y Habilitación',
+    entidad: 'pagos',
+    icon: '💰',
+    color: 'green',
+    href: '#',
+    isDropdown: true,
+    permisoLeer: 'pagos.leer',
+    children: [
+      {
+        label: 'Pagos',
+        entidad: 'pagos_listado',
+        icon: '💳',
+        color: 'green',
+        href: '#',
+        permiso: 'pagos.leer',
+      },
+    ],
+  },
+  {
+    label: 'Grupos Horarios y Aulas',
+    entidad: 'grupos_horarios',
+    icon: '📅',
+    color: 'cyan',
+    href: '#',
+    isDropdown: false,
+    permisoLeer: 'grupos_horarios.leer',
+    children: [],
+  },
+  {
+    label: 'Docentes y Carga Horaria',
+    entidad: 'docentes',
+    icon: '👨‍🏫',
+    color: 'orange',
+    href: '#',
+    isDropdown: false,
+    permisoLeer: 'docentes.leer',
+    children: [],
+  },
+  {
+    label: 'Materias y Notas',
+    entidad: 'materias_notas',
+    icon: '📚',
+    color: 'rose',
+    href: '#',
+    isDropdown: true,
+    permisoLeer: 'materias_notas.leer',
+    children: [
+      {
+        label: 'Materias',
+        entidad: 'materias',
+        icon: '📖',
+        color: 'rose',
+        href: '#',
+        permiso: 'materias.leer',
+      },
+    ],
+  },
+  {
+    label: 'Cupos y Admisión',
+    entidad: 'cupos_admision',
+    icon: '🎯',
+    color: 'teal',
+    href: '#',
+    isDropdown: false,
+    permisoLeer: 'cupos_admision.leer',
+    children: [],
+  },
+  {
+    label: 'Usuarios y Seguridad',
+    entidad: 'usuarios_seguridad',
+    icon: '👥',
+    color: 'blue',
+    href: '#',
+    isDropdown: true,
+    permisoLeer: 'usuarios.leer',
+    children: [
+      {
+        label: 'Usuarios',
+        entidad: 'usuarios',
+        icon: '👤',
+        color: 'blue',
+        href: '#',
+        permiso: 'usuarios.leer',
+      },
+      {
+        label: 'Roles',
+        entidad: 'roles',
+        icon: '🔐',
+        color: 'purple',
+        href: '#',
+        permiso: 'roles.leer',
+      },
+      {
+        label: 'Carreras',
+        entidad: 'carreras',
+        icon: '🏛️',
+        color: 'indigo',
+        href: '#',
+        permiso: 'carreras.leer',
+      },
+    ],
+  },
+  {
+    label: 'Reportes',
+    entidad: 'reportes',
+    icon: '📈',
+    color: 'slate',
+    href: '#',
+    isDropdown: false,
+    permisoLeer: 'reportes.leer',
+    children: [],
+  },
+];
+
+/**
+ * Obtiene todos los items (botones) del sidebar agrupados por módulo.
+ * Útil para la UI de permisos de roles.
+ * 
+ * IMPORTANTE: SOLO se retornan los items definidos en `children[]` de cada módulo.
+ * Si un módulo tiene children vacío, no aparecerá ningún item en permisos.
+ */
+export function getSidebarItemsByModule() {
+  const result = {};
+  sidebarModules.forEach((mod) => {
+    if (mod.children && mod.children.length > 0) {
+      result[mod.label] = mod.children.map((child) => ({
+        ...child,
+        moduloLabel: mod.label,
+      }));
+    } else {
+      // Módulo sin hijos: vacío (no se muestran items en permisos)
+      result[mod.label] = [];
+    }
+  });
+  return result;
+}
+
+/**
+ * Obtiene los items (botones) de un módulo específico por su nombre.
+ * 
+ * IMPORTANTE: SOLO retorna los items definidos en `children[]`.
+ * Si children está vacío, retorna [].
+ */
+export function getSidebarItemsForModule(moduloLabel) {
+  const mod = sidebarModules.find((m) => m.label === moduloLabel);
+  if (!mod) return [];
+
+  if (mod.children && mod.children.length > 0) {
+    return mod.children.map((child) => ({
+      ...child,
+      moduloLabel: mod.label,
+    }));
+  }
+
+  // Sin hijos: no hay items que mostrar en permisos
+  return [];
+}
+
+export default sidebarModules;
