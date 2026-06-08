@@ -1,10 +1,44 @@
+import { useState, useEffect } from 'react';
 import InputError from '@/Components/ui/InputError';
 import InputLabel from '@/Components/ui/InputLabel';
 import PrimaryButton from '@/Components/ui/PrimaryButton';
 import TextInput from '@/Components/ui/TextInput';
 import { Head, useForm, Link } from '@inertiajs/react';
 
-export default function Login({ status }) {
+export default function Login({ status, bloqueado_hasta }) {
+    const [showPassword, setShowPassword] = useState(false);
+    const [tiempoRestante, setTiempoRestante] = useState(null);
+
+    useEffect(() => {
+        if (bloqueado_hasta) {
+            const calcular = () => {
+                const ahora = new Date();
+                const fin = new Date(bloqueado_hasta);
+                const diff = Math.max(0, Math.floor((fin - ahora) / 1000));
+                setTiempoRestante(diff);
+                return diff;
+            };
+
+            calcular();
+            const intervalo = setInterval(() => {
+                const restante = calcular();
+                if (restante <= 0) {
+                    clearInterval(intervalo);
+                }
+            }, 1000);
+
+            return () => clearInterval(intervalo);
+        }
+    }, [bloqueado_hasta]);
+
+    const bloqueado = tiempoRestante !== null && tiempoRestante > 0;
+
+    const formatearTiempo = (segundos) => {
+        const min = Math.floor(segundos / 60);
+        const seg = segundos % 60;
+        return `${String(min).padStart(2, '0')}:${String(seg).padStart(2, '0')}`;
+    };
+
     const { data, setData, post, processing, errors, reset } = useForm({
         correo: '',
         password: '',
@@ -179,8 +213,28 @@ export default function Login({ status }) {
                             <h2 className="text-3xl font-bold text-slate-800 tracking-tight">
                                 ¡Hola de nuevo!
                             </h2>
+                            {tiempoRestante !== null && tiempoRestante > 0 && (
+                                <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold text-red-700">
+                                            Cuenta temporalmente bloqueada
+                                        </p>
+                                        <p className="text-xs text-red-500 mt-0.5">
+                                            Intenta de nuevo en
+                                        </p>
+                                    </div>
+                                    <div className="flex-shrink-0 bg-red-600 text-white font-bold text-lg px-3 py-1.5 rounded-lg min-w-[60px] text-center tabular-nums">
+                                        {formatearTiempo(tiempoRestante)}
+                                    </div>
+                                </div>
+                            )}
                             <p className="text-sm text-slate-500 mt-2">
-                                Ingresa tus credenciales para acceder a tu aula virtual
+                                Ingresa tus credenciales para acceder al sistema
                             </p>
                         </div>
 
@@ -189,6 +243,14 @@ export default function Login({ status }) {
                             <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
                                 <p className="text-sm font-medium text-emerald-700">
                                     {status}
+                                </p>
+                            </div>
+                        )}
+
+                        {errors.token && (
+                            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+                                <p className="text-sm font-medium text-red-700">
+                                    {errors.token}
                                 </p>
                             </div>
                         )}
@@ -222,11 +284,12 @@ export default function Login({ status }) {
                                         type="email"
                                         name="correo"
                                         value={data.correo}
-                                        className="block w-full pl-11 pr-4 p-4 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 shadow-inner"
+                                        disabled={bloqueado}
+                                        className="block w-full pl-11 pr-4 p-4 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                                         autoComplete="username"
                                         isFocused={true}
                                         onChange={(e) => setData('correo', e.target.value)}
-                                        placeholder="tu@correo.com"
+                                        placeholder={bloqueado ? 'Esperando desbloqueo...' : 'tu@correo.com'}
                                     />
                                 </div>
                                 {errors.correo && (
@@ -266,14 +329,31 @@ export default function Login({ status }) {
                                     </div>
                                     <TextInput
                                         id="password"
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         name="password"
                                         value={data.password}
-                                        className="block w-full pl-11 pr-4 p-4 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 shadow-inner"
+                                        disabled={bloqueado}
+                                        className="block w-full pl-11 pr-12 p-4 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                                         autoComplete="current-password"
                                         onChange={(e) => setData('password', e.target.value)}
-                                        placeholder="••••••••"
+                                        placeholder={bloqueado ? 'Esperando desbloqueo...' : '••••••••'}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors duration-200"
+                                    >
+                                        {showPassword ? (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        )}
+                                    </button>
                                 </div>
                                 {errors.password && (
                                     <div className="mt-2 p-2 rounded-lg bg-red-50 border border-red-100">
@@ -307,8 +387,8 @@ export default function Login({ status }) {
                             {/* Botón de acción */}
                             <div className="pt-2">
                                 <PrimaryButton
-                                    disabled={processing}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl p-4 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-0.5 transition-all duration-200 justify-center"
+                                    disabled={processing || bloqueado}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl p-4 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transform hover:-translate-y-0.5 transition-all duration-200 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:hover:-translate-y-0"
                                 >
                                     {processing ? (
                                         <span className="flex items-center justify-center gap-2">
@@ -335,16 +415,6 @@ export default function Login({ status }) {
                             </div>
                         </form>
 
-                        {/* Link de registro */}
-                        <p className="mt-8 text-center text-sm text-slate-400">
-                            ¿No tienes cuenta?{' '}
-                            <Link
-                                href="/register"
-                                className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
-                            >
-                                Regístrate aquí
-                            </Link>
-                        </p>
                     </div>
 
                     {/* Footer móvil */}

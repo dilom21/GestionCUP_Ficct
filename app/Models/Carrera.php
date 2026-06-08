@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Carrera extends Model
 {
     protected $table = 'carrera';
-
     protected $primaryKey = 'id_carrera';
 
     public $timestamps = false;
@@ -22,7 +21,7 @@ class Carrera extends Model
      */
     public function directores()
     {
-        return $this->hasMany(DirectorCarrera::class, 'id_carrera', 'id');
+        return $this->hasMany(DirectorCarrera::class, 'id_carrera', 'id_carrera');
     }
 
     /**
@@ -30,6 +29,6 @@ class Carrera extends Model
      */
     public function cupos()
     {
-        return $this->hasMany(CupoCarrera::class, 'id_carrera', 'id');
+        return $this->hasMany(CupoCarrera::class, 'id_carrera', 'id_carrera');
     }
 }

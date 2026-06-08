@@ -14,9 +14,54 @@ class Postulacion extends Model
     protected $guarded = [];
     public $timestamps = false;
 
+    protected $fillable = [
+        'id_postulante',
+        'id_carrera_opcion_1',
+        'id_carrera_opcion_2',
+        'fecha_postulacion',
+        'nro_formulario',
+        'observacion_general',
+        'fecha_revision',
+        'id_usuario_revisor',
+        'estado_postulacion',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'fecha_postulacion' => 'datetime',
+            'fecha_revision' => 'datetime',
+        ];
+    }
+
     public function postulante()
     {
         return $this->belongsTo(Postulante::class, 'id_postulante', 'id');
+    }
+
+    public function carrera1()
+    {
+        return $this->belongsTo(Carrera::class, 'id_carrera_opcion_1');
+    }
+
+    public function carrera2()
+    {
+        return $this->belongsTo(Carrera::class, 'id_carrera_opcion_2');
+    }
+
+    public function revisor()
+    {
+        return $this->belongsTo(User::class, 'id_usuario_revisor');
+    }
+
+    public function requisitos()
+    {
+        return $this->hasMany(PostulacionRequisito::class, 'id_postulacion');
+    }
+
+    public function documentos()
+    {
+        return $this->hasMany(DocumentoPostulacionPostulante::class, 'id_postulacion');
     }
 
     public function pagos()

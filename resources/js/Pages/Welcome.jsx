@@ -55,12 +55,12 @@ function Navbar({ gestion }) {
                     >
                         Acceso institucional
                     </a>
-                        <a
-                            href="#carreras"
+                        <Link
+                            href="/preinscripcion"
                             className="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[#0B2046] to-[#1E62A0] rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
                         >
                             Preinscribirme
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Mobile hamburger */}
@@ -100,13 +100,13 @@ function Navbar({ gestion }) {
                     >
                         Acceso institucional
                     </a>
-                        <a
-                            href="#carreras"
+                        <Link
+                            href="/preinscripcion"
                             onClick={() => setMobileOpen(false)}
                             className="block text-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[#0B2046] to-[#1E62A0] rounded-full mt-2"
                         >
                             Preinscribirme
-                        </a>
+                        </Link>
                     </div>
                 </div>
             )}
@@ -149,15 +149,15 @@ function Hero({ gestion }) {
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-                            <a
-                                href="#carreras"
+                            <Link
+                                href="/preinscripcion"
                                 className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 text-sm font-bold text-white bg-gradient-to-r from-[#1E62A0] to-[#2E86C1] rounded-full hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300"
                             >
                                 Preinscribirme
                                 <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
-                            </a>
+                            </Link>
                             <a
                                 href="#requisitos"
                                 className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold text-white border-2 border-white/30 rounded-full hover:bg-white/10 hover:border-white/50 transition-all duration-300"

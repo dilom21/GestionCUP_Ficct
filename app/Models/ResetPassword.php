@@ -4,25 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Bitacora extends Model
+class ResetPassword extends Model
 {
-    protected $table = 'bitacora';
-    protected $primaryKey = 'id_bitacora';
+    protected $table = 'reset_password';
 
     public $timestamps = false;
 
     protected $fillable = [
-        'accion',
-        'fecha_hora',
-        'ip',
         'id_usuario',
-        'tabla_afectada',
+        'token_hash',
+        'created_at',
+        'expires_at',
+        'used',
     ];
 
     protected function casts(): array
     {
         return [
-            'fecha_hora' => 'datetime',
+            'created_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'used' => 'boolean',
         ];
     }
 

@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('Iniciando la población masiva para la FICCT...');
 
-        // 🔥 1. POBLAR CATÁLOGOS BÁSICOS (Si ya los tienes, puedes comentar esta parte)
+        // 🔥 1. POBLAR CATÁLOGOS BÁSICOS
         DB::table('rol')->insertOrIgnore([
             ['id_rol' => 1, 'nombre' => 'Administrador'],
             ['id_rol' => 5, 'nombre' => 'Postulante'],
@@ -91,17 +91,16 @@ class DatabaseSeeder extends Seeder
                     'id_gestion_cup' => $id_gestion,
                 ]);
 
-                // F) Crear NOTAS (Asumiendo 12 evaluaciones en total en la BD: 3 parciales x 4 materias)
-                // Insertamos 12 notas por alumno
+                // F) Crear NOTAS (Asumiendo 12 evaluaciones en total)
                 $notas = [];
                 for ($eval = 1; $eval <= 12; $eval++) {
                     $notas[] = [
                         'id_evaluacion' => $eval,
                         'id_inscripcion_cup' => $id_inscripcion,
-                        'nota_obtenida' => $faker->numberBetween(30, 100), // Notas entre 30 y 100
+                        'nota_obtenida' => $faker->numberBetween(30, 100),
                     ];
                 }
-                DB::table('nota')->insert($notas); // Inserción masiva de notas para ser más rápido
+                DB::table('nota')->insert($notas);
             }
         }
 
