@@ -1,6 +1,12 @@
 import { Link } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function SidebarAdmin() {
+    const postulacionesActiva = route().current('admin.postulaciones.docentes') || route().current('admin.postulaciones.docentes.show') || route().current('admin.postulaciones.docentes.*');
+    const bitacoraActiva = route().current('admin.bitacora');
+    const [postulantesAbierto, setPostulantesAbierto] = useState(postulacionesActiva);
+    const [seguridadAbierta, setSeguridadAbierta] = useState(bitacoraActiva);
+
     const menuItems = [
         {
             label: 'Dashboard',
@@ -18,7 +24,12 @@ export default function SidebarAdmin() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
             ),
-            href: '#',
+            children: [
+                {
+                    label: 'Postulaciones Docentes',
+                    href: route('admin.postulaciones.docentes'),
+                },
+            ],
         },
         {
             label: 'Pagos y Habilitación',
@@ -66,6 +77,20 @@ export default function SidebarAdmin() {
             href: '#',
         },
         {
+            label: 'Usuarios y Seguridad',
+            icon: (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            ),
+            children: [
+                {
+                    label: 'Auditoria y Bitacora',
+                    href: route('admin.bitacora'),
+                },
+            ],
+        },
+        {
             label: 'Reportes',
             icon: (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,23 +123,95 @@ export default function SidebarAdmin() {
 
                 {/* ─── Menú de módulos ─── */}
                 <nav className="space-y-1">
-                    {menuItems.map((item, idx) => (
-                        <Link
-                            key={idx}
-                            href={item.href}
-                            className="rounded-xl mx-3 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-blue-600 hover:text-white group/item"
-                        >
-                            {/* Icono */}
-                            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center transition-colors duration-200 group-hover/item:text-white">
-                                {item.icon}
-                            </span>
+                    {menuItems.map((item, idx) => {
+                        if (item.children) {
+                            const esPostulantes = item.label === 'Postulantes y Requisitos';
+                            const abierto = esPostulantes ? postulantesAbierto : seguridadAbierta;
+                            const activo = esPostulantes ? postulacionesActiva : bitacoraActiva;
+                            const toggle = esPostulantes
+                                ? () => setPostulantesAbierto((a) => !a)
+                                : () => setSeguridadAbierta((a) => !a);
 
-                            {/* Texto */}
-                            <span className="transition-all duration-300 whitespace-nowrap opacity-0 group-hover:opacity-100">
-                                {item.label}
-                            </span>
-                        </Link>
-                    ))}
+                            return (
+                                <div key={idx}>
+                                    <button
+                                        type="button"
+                                        onClick={toggle}
+                                        className={`rounded-xl mx-3 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 group/item w-[calc(100%-1.5rem)] ${
+                                            activo
+                                                ? 'bg-blue-600 text-white'
+                                                : 'hover:bg-blue-600 hover:text-white'
+                                        }`}
+                                        aria-expanded={abierto}
+                                    >
+                                        <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                                            {item.icon}
+                                        </span>
+                                        <span className="flex min-w-0 flex-1 items-center justify-between whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                            {item.label}
+                                            <svg
+                                                className={`h-4 w-4 transition-transform duration-200 ${
+                                                    abierto ? 'rotate-180' : ''
+                                                }`}
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M19 9l-7 7-7-7"
+                                                />
+                                            </svg>
+                                        </span>
+                                    </button>
+
+                                    <div
+                                        className={`grid overflow-hidden transition-all duration-200 ${
+                                            abierto
+                                                ? 'grid-rows-[1fr] opacity-100'
+                                                : 'grid-rows-[0fr] opacity-0'
+                                        }`}
+                                    >
+                                        <div className="min-h-0">
+                                            {item.children.map((child) => (
+                                                <Link
+                                                    key={child.label}
+                                                    href={child.href}
+                                                    className={`mx-3 ml-14 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm whitespace-nowrap transition-colors ${
+                                                        activo
+                                                            ? 'bg-slate-800 text-white'
+                                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                                    }`}
+                                                >
+                                                    <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-current" />
+                                                    <span className="opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                                        {child.label}
+                                                    </span>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <Link
+                                key={idx}
+                                href={item.href}
+                                className="rounded-xl mx-3 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-blue-600 hover:text-white group/item"
+                            >
+                                <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center transition-colors duration-200 group-hover/item:text-white">
+                                    {item.icon}
+                                </span>
+                                <span className="transition-all duration-300 whitespace-nowrap opacity-0 group-hover:opacity-100">
+                                    {item.label}
+                                </span>
+                            </Link>
+                        );
+                    })}
                 </nav>
             </div>
 
