@@ -4,8 +4,10 @@ import { useState } from 'react';
 export default function SidebarAdmin() {
     const postulacionesActiva = route().current('admin.postulaciones.docentes') || route().current('admin.postulaciones.docentes.show') || route().current('admin.postulaciones.docentes.*');
     const postulacionesPostulantesActiva = route().current('admin.postulaciones.postulantes') || route().current('admin.postulaciones.postulantes.show') || route().current('admin.postulaciones.postulantes.*');
+    const docentesActiva = route().current('admin.docentes.*');
     const bitacoraActiva = route().current('admin.bitacora');
     const [postulantesAbierto, setPostulantesAbierto] = useState(postulacionesActiva || postulacionesPostulantesActiva);
+    const [docentesAbierto, setDocentesAbierto] = useState(docentesActiva);
     const [seguridadAbierta, setSeguridadAbierta] = useState(bitacoraActiva);
 
     const menuItems = [
@@ -61,7 +63,12 @@ export default function SidebarAdmin() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
             ),
-            href: '#',
+            children: [
+                {
+                    label: 'Gestión de Docentes',
+                    href: route('admin.docentes.index'),
+                },
+            ],
         },
         {
             label: 'Materias y Notas',
@@ -131,11 +138,14 @@ export default function SidebarAdmin() {
                     {menuItems.map((item, idx) => {
                         if (item.children) {
                             const esPostulantes = item.label === 'Postulantes y Requisitos';
-                            const abierto = esPostulantes ? postulantesAbierto : seguridadAbierta;
-                            const activo = esPostulantes ? (postulacionesActiva || postulacionesPostulantesActiva) : bitacoraActiva;
+                            const esDocentes = item.label === 'Docentes y Carga Horaria';
+                            const abierto = esPostulantes ? postulantesAbierto : esDocentes ? docentesAbierto : seguridadAbierta;
+                            const activo = esPostulantes ? (postulacionesActiva || postulacionesPostulantesActiva) : esDocentes ? docentesActiva : bitacoraActiva;
                             const toggle = esPostulantes
                                 ? () => setPostulantesAbierto((a) => !a)
-                                : () => setSeguridadAbierta((a) => !a);
+                                : esDocentes
+                                    ? () => setDocentesAbierto((a) => !a)
+                                    : () => setSeguridadAbierta((a) => !a);
 
                             return (
                                 <div key={idx}>

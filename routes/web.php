@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BitacoraController;
+use App\Http\Controllers\Admin\DocenteController;
 use App\Http\Controllers\Admin\PostulacionDocenteRevisionController;
 use App\Http\Controllers\Auth\AuthManualController;
 use App\Http\Controllers\Auth\PasswordResetManualController;
@@ -13,7 +14,6 @@ use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
 /*
 |--------------------------------------------------------------------------
 | Ruta pública - Landing page
@@ -69,6 +69,12 @@ Route::post('/logout', [AuthManualController::class, 'cerrarSesion'])->name('log
 Route::middleware('auth.sesion')->group(function () {
     Route::get('/admin/bitacora', [BitacoraController::class, 'index'])->name('admin.bitacora');
 
+    // Docentes - gestión de perfiles
+    Route::get('/admin/docentes', [DocenteController::class, 'index'])->name('admin.docentes.index');
+    Route::post('/admin/docentes', [DocenteController::class, 'store'])->name('admin.docentes.store');
+    Route::match(['put', 'patch'], '/admin/docentes/{id}', [DocenteController::class, 'update'])->name('admin.docentes.update');
+    Route::post('/admin/docentes/{id}/cambiar-estado', [DocenteController::class, 'cambiarEstado'])->name('admin.docentes.cambiar-estado');
+
     // Postulaciones docentes - revisión administrativa
     // Postulantes - revisión administrativa
     Route::get('/admin/postulaciones-postulantes', [PostulacionPostulanteRevisionController::class, 'index'])->name('admin.postulaciones.postulantes');
@@ -90,6 +96,7 @@ Route::middleware('auth.sesion')->group(function () {
         'Content-Disposition' => 'inline; filename="'.$nombre.'"',
     ]);
 })->name('admin.postulaciones.postulantes.descargar');
+
 
 Route::get('/admin/postulaciones-docentes/documentos/{documento}/descargar', function (Request $request, DocumentoPostulacionDocente $documento) {
         try {

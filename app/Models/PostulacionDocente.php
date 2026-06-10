@@ -24,7 +24,7 @@ class PostulacionDocente extends Model
         'fecha_postulacion',
         'fecha_revision',
         'id_usuario_revisor',
-        // 'id_usuario_creado', // Comentado: se usará cuando se implemente creación de usuarios
+        'id_usuario_creado',
     ];
 
     protected function casts(): array
