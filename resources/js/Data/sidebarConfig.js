@@ -26,7 +26,7 @@ const sidebarModules = [
     href: '#',
     isDropdown: false,
     permisoLeer: 'dashboard.leer',
-    children: [], // ← mientras esté vacío no habrá items en permisos
+    children: [],
   },
   {
     label: 'Postulantes y Requisitos',
@@ -34,9 +34,26 @@ const sidebarModules = [
     icon: '📋',
     color: 'amber',
     href: '#',
-    isDropdown: false,
+    isDropdown: true,
     permisoLeer: 'postulantes.leer',
-    children: [],
+    children: [
+      {
+        label: 'Postulaciones Docentes',
+        entidad: 'postulaciones_docentes',
+        icon: '📄',
+        color: 'amber',
+        href: '#',
+        permiso: 'postulaciones_docentes.leer',
+      },
+      {
+        label: 'Postulaciones de Postulantes',
+        entidad: 'postulaciones_postulantes',
+        icon: '👤',
+        color: 'amber',
+        href: '#',
+        permiso: 'postulaciones_postulantes.leer',
+      },
+    ],
   },
   {
     label: 'Pagos y Habilitación',
@@ -73,9 +90,18 @@ const sidebarModules = [
     icon: '👨‍🏫',
     color: 'orange',
     href: '#',
-    isDropdown: false,
+    isDropdown: true,
     permisoLeer: 'docentes.leer',
-    children: [],
+    children: [
+      {
+        label: 'Gestión de Docentes',
+        entidad: 'gestion_docentes',
+        icon: '👨‍🏫',
+        color: 'orange',
+        href: '#',
+        permiso: 'docentes.leer',
+      },
+    ],
   },
   {
     label: 'Materias y Notas',
@@ -139,6 +165,14 @@ const sidebarModules = [
         href: '#',
         permiso: 'carreras.leer',
       },
+      {
+        label: 'Auditoria y Bitacora',
+        entidad: 'bitacora',
+        icon: '📋',
+        color: 'blue',
+        href: '#',
+        permiso: 'bitacora.leer',
+      },
     ],
   },
   {
@@ -169,7 +203,6 @@ export function getSidebarItemsByModule() {
         moduloLabel: mod.label,
       }));
     } else {
-      // Módulo sin hijos: vacío (no se muestran items en permisos)
       result[mod.label] = [];
     }
   });
@@ -178,9 +211,6 @@ export function getSidebarItemsByModule() {
 
 /**
  * Obtiene los items (botones) de un módulo específico por su nombre.
- * 
- * IMPORTANTE: SOLO retorna los items definidos en `children[]`.
- * Si children está vacío, retorna [].
  */
 export function getSidebarItemsForModule(moduloLabel) {
   const mod = sidebarModules.find((m) => m.label === moduloLabel);
@@ -193,7 +223,6 @@ export function getSidebarItemsForModule(moduloLabel) {
     }));
   }
 
-  // Sin hijos: no hay items que mostrar en permisos
   return [];
 }
 

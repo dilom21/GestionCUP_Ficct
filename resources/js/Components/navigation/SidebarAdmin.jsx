@@ -140,6 +140,7 @@ export default function SidebarAdmin() {
                               child.entidad === 'postulaciones_docentes' ? route('admin.postulaciones.docentes') :
                               child.entidad === 'postulaciones_postulantes' ? route('admin.postulaciones.postulantes') :
                               child.entidad === 'bitacora' ? route('admin.bitacora') :
+                              child.entidad === 'gestion_docentes' ? route('admin.docentes.index') :
                               '#',
                     })),
                 };
