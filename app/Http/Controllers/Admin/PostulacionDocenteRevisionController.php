@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Docente;
 use App\Models\PostulacionDocente;
 use App\Models\PostulacionDocenteRequisito;
 use App\Models\Rol;
@@ -122,7 +123,7 @@ class PostulacionDocenteRevisionController extends Controller
                 ])->withInput();
             }
 
-            User::create([
+            $usuarioCreado = User::create([
                 'correo'            => $request->correo_acceso,
                 'password'          => Hash::make($request->password_acceso),
                 'estado'            => 'Activo',
@@ -133,6 +134,9 @@ class PostulacionDocenteRevisionController extends Controller
                 'intentos_fallidos' => 0,
                 'bloqueado_hasta'   => null,
             ]);
+
+            // Guardar referencia al usuario creado en la postulación
+            $postulacion->update(['id_usuario_creado' => $usuarioCreado->id]);
 
             BitacoraService::registrar(
                 "Postulación docente aprobada - Usuario {$request->correo_acceso} creado para {$nombrePostulante}",

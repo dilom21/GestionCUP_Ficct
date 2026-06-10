@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BitacoraController;
+use App\Http\Controllers\Admin\DocenteController;
 use App\Http\Controllers\Admin\PostulacionDocenteRevisionController;
 use App\Http\Controllers\Admin\PostulacionPostulanteRevisionController;
 use App\Http\Controllers\Auth\AuthManualController;
@@ -73,6 +74,12 @@ Route::post('/logout', [AuthManualController::class, 'cerrarSesion'])->name('log
 */
 Route::middleware('auth.sesion')->group(function () {
     Route::get('/admin/bitacora', [BitacoraController::class, 'index'])->name('admin.bitacora');
+
+    // Docentes - gestión de perfiles
+    Route::get('/admin/docentes', [DocenteController::class, 'index'])->name('admin.docentes.index');
+    Route::post('/admin/docentes', [DocenteController::class, 'store'])->name('admin.docentes.store');
+    Route::match(['put', 'patch'], '/admin/docentes/{id}', [DocenteController::class, 'update'])->name('admin.docentes.update');
+    Route::post('/admin/docentes/{id}/cambiar-estado', [DocenteController::class, 'cambiarEstado'])->name('admin.docentes.cambiar-estado');
 
     // Postulaciones docentes - revisión administrativa
     Route::get('/admin/postulaciones-docentes', [PostulacionDocenteRevisionController::class, 'index'])->name('admin.postulaciones.docentes');
