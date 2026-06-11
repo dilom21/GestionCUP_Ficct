@@ -101,6 +101,14 @@ const sidebarModules = [
         href: '#',
         permiso: 'docentes.leer',
       },
+      {
+        label: 'Gestión de Postulantes',
+        entidad: 'gestion_postulantes',
+        icon: '👨‍🎓',
+        color: 'emerald',
+        href: '#',
+        permiso: 'postulaciones_postulantes.leer',
+      },
     ],
   },
   {
