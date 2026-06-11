@@ -88,18 +88,14 @@ const iconMap = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
     </svg>
   ),
-<<<<<<< HEAD
   aulas: (
-=======
-  gestion_postulantes: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  ),
-  pagos_listado: (
->>>>>>> origin/dev-amador
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+  ),
+  gestion_postulantes: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   ),
   asignacion_academica: (
@@ -122,26 +118,26 @@ const iconMap = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   ),
-    pagos_listado: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-    ),
-    asistencia: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-        </svg>
-    ),
-    asistencia_docente: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-    ),
-    asistencia_estudiantes: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-    ),
+  pagos_listado: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  ),
+  asistencia: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  ),
+  asistencia_docente: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  ),
+  asistencia_estudiantes: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+    </svg>
+  ),
 };
 
 function getIconForModule(entidad) {
@@ -211,7 +207,7 @@ export default function SidebarAdmin() {
                               child.entidad === 'postulaciones_postulantes' ? route('admin.postulaciones.postulantes') :
                               child.entidad === 'bitacora' ? route('admin.bitacora') :
                               child.entidad === 'gestion_docentes' ? route('admin.docentes.index') :
-<<<<<<< HEAD
+                              child.entidad === 'gestion_postulantes' ? route('admin.postulantes.gestion') :
                               child.entidad === 'docentes_materias' ? route('docentes.materias.index') :
                               child.entidad === 'aulas' ? route('aulas.index') :
                               child.entidad === 'grupos' ? route('grupos.index') :
@@ -219,9 +215,6 @@ export default function SidebarAdmin() {
                               child.entidad === 'horarios' ? route('horarios.index') :
                               child.entidad === 'asistencia_docente' ? route('admin.asistencia.index', { tab: 'docente' }) :
                               child.entidad === 'asistencia_estudiantes' ? route('admin.asistencia.index', { tab: 'estudiante' }) :
-=======
-                              child.entidad === 'gestion_postulantes' ? route('admin.postulantes.gestion') :
->>>>>>> origin/dev-amador
                               '#',
                     })),
                 };
@@ -237,45 +230,34 @@ export default function SidebarAdmin() {
 
     // Filtrar items del menú según permisos
     const visibleMenuItems = modulesConfig.filter((item) => {
-        // El Administrador ve TODOS los botones sin filtro
         if (esAdmin) return true;
-
         if (item.isDropdown) {
-            // Mostrar el dropdown si al menos un hijo tiene permiso
             return item.children.some((child) => {
                 if (child.permiso) return tienePermiso(child.permiso);
                 return true;
             });
         }
-        // Para items simples, verificar permiso de lectura
         if (item.permisoLeer) return tienePermiso(item.permisoLeer);
-        // Si no tiene permiso especificado, se muestra
         return true;
     });
 
     return (
         <aside className={`group bg-slate-900 border-r border-slate-800 text-slate-400 h-screen sticky top-0 flex flex-col justify-between transition-all duration-300 ease-in-out shadow-2xl z-50 overflow-y-auto overflow-x-hidden ${sidebarLocked ? 'w-72' : 'w-20 hover:w-72'}`}>
-            {/* ─── Cabecera: Avatar + Bienvenida ─── */}
             <div>
                 <div className="px-4 py-6 flex items-center gap-4 min-h-[88px]">
                     <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/20">
                         A
                     </div>
-
                     <div className={`whitespace-nowrap transition-opacity duration-200 delay-100 ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                         <p className="text-xs text-slate-400">Bienvenido,</p>
                         <p className="text-sm text-white font-bold capitalize">{usuarioRol || 'Usuario'}</p>
                     </div>
                 </div>
-
                 <div className="mx-3 mb-4 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
-
-                {/* ─── Menú de módulos ─── */}
                 <nav className="space-y-1 px-2">
                     {visibleMenuItems.map((item, idx) =>
                         item.isDropdown ? (
                             <div key={idx}>
-                                {/* Botón del menú principal */}
                                 <button
                                     onClick={() => toggleMenu(item.label)}
                                     className={`w-full rounded-xl px-3 py-3 text-sm font-medium flex items-center gap-4 transition-all duration-200 hover:bg-blue-600 hover:text-white group/item ${
@@ -290,22 +272,12 @@ export default function SidebarAdmin() {
                                     </span>
                                     <svg
                                         className={`w-4 h-4 transition-all duration-300 ${expandedMenu === item.label ? 'rotate-180' : ''} ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                     >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </button>
-
-                                {/* Submenú (mostrar todos los hijos si es admin, o solo los que tienen permiso) */}
-                                <div
-                                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                                        expandedMenu === item.label
-                                            ? 'max-h-96 opacity-100 mt-1'
-                                            : 'max-h-0 opacity-0'
-                                    }`}
-                                >
+                                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedMenu === item.label ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
                                     <div className="ml-11 space-y-1 border-l-2 border-blue-500/30 pl-3">
                                         {item.children
                                             .filter((child) => {
@@ -318,9 +290,7 @@ export default function SidebarAdmin() {
                                                     key={childIdx}
                                                     href={child.href}
                                                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                                        isActive(child.href)
-                                                            ? 'bg-blue-600 text-white shadow-sm'
-                                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                                        isActive(child.href) ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                                     }`}
                                                 >
                                                     <span className="flex-shrink-0">{child.icon}</span>
@@ -334,9 +304,7 @@ export default function SidebarAdmin() {
                             <Link
                                 key={idx}
                                 href={item.href}
-                                className={`rounded-xl mx-1 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-blue-600 hover:text-white group/item ${
-                                    isActive(item.href) ? 'bg-blue-600 text-white' : ''
-                                }`}
+                                className={`rounded-xl mx-1 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-blue-600 hover:text-white group/item ${isActive(item.href) ? 'bg-blue-600 text-white' : ''}`}
                             >
                                 <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center transition-colors duration-200 group-hover/item:text-white">
                                     {item.icon}
@@ -349,8 +317,6 @@ export default function SidebarAdmin() {
                     )}
                 </nav>
             </div>
-
-            {/* ─── Pie: Cerrar sesión y bloquear sidebar ─── */}
             <div className="px-4 py-4">
                 <div className="mx-1 mb-4 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
                 <button
@@ -366,7 +332,7 @@ export default function SidebarAdmin() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                     <span className={`transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                        {sidebarLocked ? 'Fijar sidebar' : 'Fijar sidebar'}
+                        Fijar sidebar
                     </span>
                 </button>
                 <Link
