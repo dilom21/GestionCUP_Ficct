@@ -105,6 +105,17 @@ class AsignacionAcademicaController extends Controller
             return redirect()->back()->with('error', 'El docente no está habilitado para impartir esta materia. Debe asignarle la materia primero en "Gestión de Materias por Docente".')->withInput();
         }
 
+        // Validar que no exista una asignación duplicada (misma materia+grupo+docente+gestion)
+        $duplicado = AsignacionAcademica::where('id_materia', $validated['id_materia'])
+            ->where('id_grupo', $validated['id_grupo'])
+            ->where('id_docente', $validated['id_docente'])
+            ->where('id_gestion_cup', $validated['id_gestion_cup'])
+            ->exists();
+
+        if ($duplicado) {
+            return redirect()->back()->with('error', 'Ya existe una asignación académica con la misma materia, grupo, docente y gestión.')->withInput();
+        }
+
         // Validar límite de grupos del docente
         $validationService->validarLimiteGruposDocente(
             $validated['id_docente'],
@@ -153,11 +164,34 @@ class AsignacionAcademicaController extends Controller
             }
         }
 
+        // GAP 5: Validar que no exista duplicado (excluyendo la asignación actual)
+        $duplicado = AsignacionAcademica::where('id_materia', $validated['id_materia'])
+            ->where('id_grupo', $validated['id_grupo'])
+            ->where('id_docente', $validated['id_docente'])
+            ->where('id_gestion_cup', $asignacionAcademica->id_gestion_cup)
+            ->where('id', '!=', $asignacionAcademica->id)
+            ->exists();
+
+        if ($duplicado) {
+            return redirect()->back()->with('error', 'Ya existe otra asignación académica con la misma materia, grupo, docente y gestión.')->withInput();
+        }
+
         if ($cambioDocente) {
             $validationService->validarLimiteGruposDocente(
                 $validated['id_docente'],
                 $asignacionAcademica->id_gestion_cup
             );
+
+            // GAP 3: Validar que el nuevo docente no tenga cruces con horarios existentes
+            $horariosExistentes = Horario::where('id_asignacion_academica', $asignacionAcademica->id)->get();
+            foreach ($horariosExistentes as $horario) {
+                $validationService->validarCruceHorarioDocente(
+                    $validated['id_docente'],
+                    $horario->dia_semana,
+                    $horario->horario_inicio,
+                    $horario->horario_fin
+                );
+            }
         }
 
         if ($cambioGrupo) {

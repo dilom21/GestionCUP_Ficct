@@ -157,6 +157,41 @@ class AcademicValidationService
     }
 
     /**
+     * Valida que la suma de duraciones de los horarios no exceda la carga horaria
+     * de la asignación académica.
+     */
+    public function validarCargaHoraria(int $asignacionAcademicaId, string $nuevaHoraInicio, string $nuevaHoraFin, ?int $excluirHorarioId = null): void
+    {
+        $asignacion = AsignacionAcademica::with('horarios')->findOrFail($asignacionAcademicaId);
+
+        $totalMinutos = 0;
+
+        foreach ($asignacion->horarios as $horario) {
+            if ($excluirHorarioId && $horario->id === $excluirHorarioId) {
+                continue;
+            }
+            [$hI, $mI] = explode(':', $horario->horario_inicio);
+            [$hF, $mF] = explode(':', $horario->horario_fin);
+            $totalMinutos += ((int) $hF * 60 + (int) $mF) - ((int) $hI * 60 + (int) $mI);
+        }
+
+        [$hI, $mI] = explode(':', $nuevaHoraInicio);
+        [$hF, $mF] = explode(':', $nuevaHoraFin);
+        $nuevosMinutos = ((int) $hF * 60 + (int) $mF) - ((int) $hI * 60 + (int) $mI);
+        $totalMinutos += $nuevosMinutos;
+
+        $totalHoras = $totalMinutos / 60;
+
+        if ($totalHoras > $asignacion->carga_horaria) {
+            throw new HttpException(422,
+                "La suma total de horas de los horarios ({$totalHoras}h) excede la carga horaria " .
+                "de la asignación ({$asignacion->carga_horaria}h). " .
+                "Reduzca la duración o elimine algún horario existente."
+            );
+        }
+    }
+
+    /**
      * Validación completa para crear/actualizar un horario.
      */
     public function validarHorarioCompleto(

@@ -103,6 +103,13 @@ class HorarioController extends Controller
             $validated['horario_fin']
         );
 
+        // GAP 9: Validar que no se exceda la carga horaria de la asignación
+        $validationService->validarCargaHoraria(
+            $validated['id_asignacion_academica'],
+            $validated['horario_inicio'],
+            $validated['horario_fin']
+        );
+
         DB::beginTransaction();
         try {
             $horario = Horario::create($validated);
@@ -142,6 +149,14 @@ class HorarioController extends Controller
             $horario->id_asignacion_academica,
             $validated['id_aula'],
             $validated['dia_semana'],
+            $validated['horario_inicio'],
+            $validated['horario_fin'],
+            $horario->id
+        );
+
+        // GAP 9: Validar que no se exceda la carga horaria (excluyendo el horario actual)
+        $validationService->validarCargaHoraria(
+            $horario->id_asignacion_academica,
             $validated['horario_inicio'],
             $validated['horario_fin'],
             $horario->id
