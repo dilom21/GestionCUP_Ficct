@@ -14,7 +14,7 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
     const { data, setData, post, processing, errors, reset } = useForm({
         nombre: '', apellidos: '', correo: '', telefono: '', ci: '',
         fecha_nacimiento: '', sexo: '', direccion: '', colegio_procedencia: '',
-        ciudad: '', id_carrera_opcion_1: '', id_carrera_opcion_2: '',
+        ciudad: '', turno: '', id_carrera_opcion_1: '', id_carrera_opcion_2: '',
         documentos: [],
     });
 
@@ -82,6 +82,7 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
         fd.append('direccion', data.direccion || '');
         fd.append('colegio_procedencia', data.colegio_procedencia || '');
         fd.append('ciudad', data.ciudad);
+        fd.append('turno', data.turno);
         fd.append('id_carrera_opcion_1', data.id_carrera_opcion_1);
         fd.append('id_carrera_opcion_2', data.id_carrera_opcion_2);
         documentosList.forEach((a, i) => fd.append(`documentos[${i}]`, a));
@@ -277,6 +278,17 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
                                             <input type="text" value={data.ciudad} onChange={(e) => setData('ciudad', e.target.value)}
                                                 className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${errors.ciudad ? 'border-red-300' : 'border-slate-200 focus:border-blue-600'}`} />
                                             {errors.ciudad && <p className="mt-1 text-xs text-red-500">{errors.ciudad}</p>}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Turno *</label>
+                                            <select value={data.turno} onChange={(e) => setData('turno', e.target.value)}
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${errors.turno ? 'border-red-300' : 'border-slate-200 focus:border-blue-600'}`}>
+                                                <option value="">Seleccionar...</option>
+                                                <option value="Mañana">Mañana</option>
+                                                <option value="Tarde">Tarde</option>
+                                                <option value="Noche">Noche</option>
+                                            </select>
+                                            {errors.turno && <p className="mt-1 text-xs text-red-500">{errors.turno}</p>}
                                         </div>
                                         <div className="sm:col-span-2">
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Dirección</label>

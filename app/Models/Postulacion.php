@@ -25,6 +25,7 @@ class Postulacion extends Model
         'id_usuario_revisor',
         'estado_postulacion',
         'token_pago',
+        'turno',
     ];
 
     protected function casts(): array

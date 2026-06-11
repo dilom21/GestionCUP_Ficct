@@ -93,6 +93,7 @@ export default function PostulacionPostulanteShow({ postulacion }) {
                                 <div className="sm:col-span-2"><span className="text-slate-400">Ciudad</span><p className="font-medium text-slate-800">{postulacion.postulante?.ciudad || '—'}</p></div>
                                 <div className="sm:col-span-2"><span className="text-slate-400">Dirección</span><p className="font-medium text-slate-800">{postulacion.postulante?.direccion || '—'}</p></div>
                                 <div className="sm:col-span-2"><span className="text-slate-400">Colegio</span><p className="font-medium text-slate-800">{postulacion.postulante?.colegio_procedencia || '—'}</p></div>
+                                <div className="sm:col-span-2"><span className="text-slate-400">Turno</span><p className="font-medium text-slate-800">{postulacion.turno || '—'}</p></div>
                             </div>
                         </div>
 

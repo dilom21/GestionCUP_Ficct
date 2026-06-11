@@ -30,7 +30,7 @@ class PostulacionPostulanteRevisionController extends Controller
             });
         }
 
-        $postulaciones = $query->paginate(15)->withQueryString();
+        $postulaciones = $query->get();
 
         return Inertia::render('Admin/PostulacionesPostulantes/Index', [
             'postulaciones' => $postulaciones,

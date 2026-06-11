@@ -80,6 +80,7 @@ class PostulacionPostulanteController extends Controller
             'direccion'           => 'nullable|string|max:500',
             'colegio_procedencia' => 'nullable|string|max:255',
             'ciudad'              => 'required|string|max:255',
+            'turno'               => 'required|in:Mañana,Tarde,Noche',
             'id_carrera_opcion_1' => 'required|integer|exists:carrera,id_carrera',
             'id_carrera_opcion_2' => 'required|integer|exists:carrera,id_carrera|different:id_carrera_opcion_1',
         ], [
@@ -92,6 +93,7 @@ class PostulacionPostulanteController extends Controller
             'fecha_nacimiento.required'      => 'La fecha de nacimiento es obligatoria.',
             'sexo.required'                  => 'El sexo es obligatorio.',
             'ciudad.required'                => 'La ciudad es obligatoria.',
+            'turno.required'                 => 'El turno es obligatorio.',
             'id_carrera_opcion_1.required'   => 'La carrera opción 1 es obligatoria.',
             'id_carrera_opcion_2.required'   => 'La carrera opción 2 es obligatoria.',
             'id_carrera_opcion_2.different'  => 'La opción 2 debe ser diferente a la opción 1.',
@@ -133,6 +135,7 @@ class PostulacionPostulanteController extends Controller
             'fecha_postulacion'   => now(),
             'nro_formulario'      => $nroFormulario,
             'estado_postulacion'  => 'Pendiente',
+            'turno'               => $validated['turno'],
         ]);
 
         // Crear checks de requisitos
