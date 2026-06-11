@@ -29,7 +29,7 @@ const sidebarModules = [
     children: [],
   },
   {
-    label: 'Postulantes y Requisitos',
+    label: 'Postulaciones y Requisitos',
     entidad: 'postulantes',
     icon: '📋',
     color: 'amber',

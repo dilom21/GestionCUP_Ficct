@@ -57,15 +57,17 @@ Route::post('/postulacion-docente', [PostulacionDocenteController::class, 'store
 
 Route::get('/preinscripcion', [PostulacionPostulanteController::class, 'create'])->name('preinscripcion.create');
 Route::post('/preinscripcion', [PostulacionPostulanteController::class, 'store'])->name('preinscripcion.store');
-Route::get('/preinscripcion/pago/{id}', function ($id) {
-    $postulacion = \App\Models\Postulacion::with(['postulante', 'carrera1', 'carrera2'])->findOrFail($id);
-    return Inertia::render('Preinscripcion/Pago', [
-        'postulacion' => $postulacion,
-    ]);
+Route::get('/preinscripcion/pago/{id}', function (Illuminate\Http\Request $request, $id) {
+    $token = $request->query('token');
+    $query = $token ? '?token=' . urlencode($token) : '';
+    return redirect('/preinscripcion?id=' . $id . $query);
 })->name('preinscripcion.pago');
 Route::get('/preinscripcion/{id}', [PostulacionPostulanteController::class, 'show'])->name('preinscripcion.show');
 
 Route::post('/logout', [AuthManualController::class, 'cerrarSesion'])->name('logout');
+
+Route::post('/stripe/webhook', [PagoController::class, 'handleWebhook'])->name('stripe.webhook');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -193,8 +195,9 @@ Route::middleware('auth.sesion')->group(function () {
     */
     Route::prefix('financiero')->group(function () {
         Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
-        Route::post('/pago/crear-sesion', [PagoController::class, 'createCheckoutSession'])->name('pago.crear-sesion');
-        Route::get('/pago/exito', [PagoController::class, 'pagoExito'])->name('pago.exito');
-        Route::get('/pago/cancelado', [PagoController::class, 'pagoCancelado'])->name('pago.cancelado');
     });
 });
+
+Route::post('/financiero/pago/crear-sesion', [PagoController::class, 'createCheckoutSession'])->name('pago.crear-sesion');
+Route::get('/financiero/pago/exito', [PagoController::class, 'pagoExito'])->name('pago.exito');
+Route::get('/financiero/pago/cancelado', [PagoController::class, 'pagoCancelado'])->name('pago.cancelado');

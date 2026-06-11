@@ -96,7 +96,7 @@ class PostulacionPostulanteRevisionController extends Controller
         $postulacion = Postulacion::findOrFail($id);
 
         $request->validate([
-            'estado_postulacion' => 'required|in:Observado,Rechazado,Aprobado',
+            'estado_postulacion' => 'required|in:Observado,Rechazado,Pago,Aprobado',
             'observacion_general' => 'nullable|string|max:1000',
         ]);
 
@@ -105,25 +105,35 @@ class PostulacionPostulanteRevisionController extends Controller
             ($postulacion->postulante->nombre . ' ' . $postulacion->postulante->apellidos) : 
             'Postulante #' . $postulacion->id_postulante;
 
-        $postulacion->update([
+        $dataUpdate = [
             'estado_postulacion'  => $nuevoEstado,
             'observacion_general' => $request->observacion_general,
             'fecha_revision'      => now(),
             'id_usuario_revisor'  => session('usuario_id'),
-        ]);
+        ];
 
-        // Enviar correo
+        if ($nuevoEstado === 'Pago') {
+            $dataUpdate['token_pago'] = bin2hex(random_bytes(32));
+        }
+
+        $postulacion->update($dataUpdate);
+
+        $correoDestino = $postulacion->postulante?->correo ?? '';
+
         try {
             $resendService = new ResendEmailService();
 
             $asunto = match ($nuevoEstado) {
                 'Observado' => 'Postulación observada - CUP FICCT',
                 'Rechazado' => 'Postulación rechazada - CUP FICCT',
+                'Pago'      => 'Postulación apta para pago - CUP FICCT',
                 'Aprobado'  => 'Postulación aprobada - CUP FICCT',
                 default     => 'Actualización de postulación - CUP FICCT',
             };
 
-            $urlPago = $nuevoEstado === 'Aprobado' ? url('/preinscripcion/pago/' . $postulacion->id) : '';
+            $urlPago = $nuevoEstado === 'Pago' && $postulacion->token_pago
+                ? url('/preinscripcion?id=' . $postulacion->id . '&token=' . $postulacion->token_pago)
+                : '';
 
             $mensaje = match ($nuevoEstado) {
                 'Observado' => "
@@ -139,23 +149,29 @@ class PostulacionPostulanteRevisionController extends Controller
                     <p>Tu postulación ha sido <strong>rechazada</strong>.</p>
                     <p><strong>Motivo:</strong> " . e($request->observacion_general ?? 'Sin especificar') . "</p>
                 ",
+                'Pago' => "
+                    <h1>Postulación Aprobada — Pendiente de Pago</h1>
+                    <p>Hola, <strong>{$nombrePostulante}</strong>.</p>
+                    <p>Tus documentos han sido <strong>verificados correctamente</strong>.</p>
+                    <p>Para completar tu inscripción al <strong>Curso Preuniversitario FICCT</strong>, debes realizar el pago correspondiente.</p>
+                    <p style='text-align:center;margin:30px 0;'>
+                        <a href='{$urlPago}' style='display:inline-block;padding:14px 32px;background:#059669;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;'>Ir al pago — 350 Bs</a>
+                    </p>
+                    <p style='color:#666;font-size:13px;'>Este enlace es de un solo uso. Una vez realizado el pago, recibirás tus credenciales de acceso al sistema.</p>
+                ",
                 'Aprobado' => "
                     <h1>Postulación Aprobada</h1>
                     <p>Hola, <strong>{$nombrePostulante}</strong>.</p>
                     <p>Tu postulación ha sido <strong>aprobada</strong>.</p>
-                    <p>Puedes continuar con el pago para completar tu inscripción.</p>
-                    <p><a href='{$urlPago}' style='display:inline-block;padding:12px 24px;background:#1E62A0;color:white;text-decoration:none;border-radius:8px;font-weight:bold;'>Ir al pago</a></p>
                 ",
                 default => '',
             };
 
-            $mensaje .= '<hr><p style="color:#666;font-size:12px;">Curso Preuniversitario FICCT</p>';
+            $mensaje .= '<hr><p style="color:#666;font-size:12px;">Curso Preuniversitario FICCT — Facultad de Ciencias de la Computación y Telecomunicaciones</p>';
 
-            $resendService->enviar(
-                $postulacion->correo ?? '',
-                $asunto,
-                $mensaje
-            );
+            if ($correoDestino) {
+                $resendService->enviar($correoDestino, $asunto, $mensaje);
+            }
         } catch (\Throwable $e) {
             Log::error('No se pudo enviar el correo.', [
                 'error' => $e->getMessage(),
@@ -164,7 +180,8 @@ class PostulacionPostulanteRevisionController extends Controller
         }
 
         BitacoraService::registrar(
-            "Postulación de postulante {$nuevoEstado} - {$nombrePostulante}",
+            "Postulación de postulante {$nuevoEstado} - {$nombrePostulante}"
+                . ($nuevoEstado === 'Pago' ? ' - Token de pago generado' : ''),
             session('usuario_id'),
             'postulacion'
         );

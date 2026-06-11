@@ -48,7 +48,7 @@ export default function PostulacionPostulanteShow({ postulacion }) {
         }
     }, [flash?.success]);
 
-    const colores = { Pendiente: 'bg-amber-100 text-amber-700 border-amber-200', Observado: 'bg-orange-100 text-orange-700 border-orange-200', Rechazado: 'bg-red-100 text-red-700 border-red-200', Aprobado: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+    const colores = { Pendiente: 'bg-amber-100 text-amber-700 border-amber-200', Observado: 'bg-orange-100 text-orange-700 border-orange-200', Rechazado: 'bg-red-100 text-red-700 border-red-200', Pago: 'bg-blue-100 text-blue-700 border-blue-200', Aprobado: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
     const fFecha = (f) => f ? new Date(f).toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
     const fBytes = (b) => { if (!b) return '—'; const k = 1024, s = ['Bytes', 'KB', 'MB']; const i = Math.floor(Math.log(b) / Math.log(k)); return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + s[i]; };
 
@@ -169,6 +169,7 @@ export default function PostulacionPostulanteShow({ postulacion }) {
                                             <option value="">Seleccionar...</option>
                                             <option value="Observado">Observado</option>
                                             <option value="Rechazado">Rechazado</option>
+                                            <option value="Pago">Pago (requisitos cumplen)</option>
                                             <option value="Aprobado">Aprobado</option>
                                         </select>
                                     </div>

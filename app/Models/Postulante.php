@@ -18,6 +18,8 @@ class Postulante extends Model
         'id_usuario',
         'nombre',
         'apellidos',
+        'correo',
+        'telefono',
         'ci',
         'fecha_nacimiento',
         'sexo',

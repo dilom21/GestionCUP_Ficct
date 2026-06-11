@@ -17,7 +17,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_KEY);
  * - cancelled: Pago cancelado por el usuario
  * - error: Ocurrió un error
  */
-export default function PasarelaPago({ status, id_postulacion, mensaje, session_id }) {
+export default function PasarelaPago({ status, id_postulacion, mensaje, session_id, autoStart = true, token }) {
     const [pagoStatus, setPagoStatus] = useState(status || 'initial');
     const [errorMsg, setErrorMsg] = useState(mensaje || '');
     const [loading, setLoading] = useState(false);
@@ -32,10 +32,10 @@ export default function PasarelaPago({ status, id_postulacion, mensaje, session_
 
     // Si nos pasan un id_postulacion y estamos en initial, iniciamos automáticamente
     useEffect(() => {
-        if (id_postulacion && pagoStatus === 'initial') {
+        if (autoStart && id_postulacion && pagoStatus === 'initial') {
             iniciarPago();
         }
-    }, [id_postulacion]);
+    }, [id_postulacion, autoStart]);
 
     const iniciarPago = async () => {
         if (!id_postulacion) {
@@ -50,9 +50,9 @@ export default function PasarelaPago({ status, id_postulacion, mensaje, session_
 
         try {
             // 1. Solicitar la creación de la sesión al backend
-            const response = await axios.post(route('pago.crear-sesion'), {
-                id_postulacion: id_postulacion,
-            });
+            const body = { id_postulacion: id_postulacion };
+            if (token) body.token = token;
+            const response = await axios.post(route('pago.crear-sesion'), body);
 
             const { url } = response.data;
 

@@ -18,20 +18,56 @@ use Inertia\Inertia;
 
 class PostulacionPostulanteController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
         $carreras = Carrera::orderBy('nombre')
             ->get(['id_carrera as id', 'nombre', 'sigla']);
         $requisitos = Requisito::where('estado', 'Activo')->get();
 
+        $paymentData = null;
+        $paymentSuccess = null;
+        $idPostulacion = $request->query('id');
+        $token = $request->query('token');
+
+        if ($request->query('status') === 'success' && $idPostulacion) {
+            $postulacion = Postulacion::with(['postulante', 'carrera1', 'carrera2'])
+                ->find($idPostulacion);
+            if ($postulacion) {
+                $paymentSuccess = [
+                    'id' => $postulacion->id,
+                    'nombre' => $postulacion->postulante?->nombre ?? '',
+                    'nro_formulario' => $postulacion->nro_formulario,
+                    'estado' => $postulacion->estado_postulacion,
+                    'session_id' => $request->query('session_id', ''),
+                ];
+            }
+        } elseif ($idPostulacion && $token) {
+            $postulacion = Postulacion::with(['postulante', 'carrera1', 'carrera2'])
+                ->find($idPostulacion);
+            if ($postulacion && $postulacion->token_pago && $postulacion->token_pago === $token && $postulacion->estado_postulacion === 'Pago') {
+                $paymentData = [
+                    'id' => $postulacion->id,
+                    'token' => $token,
+                    'nombre' => $postulacion->postulante?->nombre ?? '',
+                    'nro_formulario' => $postulacion->nro_formulario,
+                    'carrera1' => $postulacion->carrera1?->nombre ?? '',
+                    'carrera2' => $postulacion->carrera2?->nombre ?? '',
+                ];
+            }
+        }
+
         return Inertia::render('Preinscripcion/Create', [
             'carreras' => $carreras,
             'requisitos' => $requisitos,
+            'paymentData' => $paymentData,
+            'paymentSuccess' => $paymentSuccess,
         ]);
     }
 
     public function store(Request $request)
     {
+        set_time_limit(180);
+
         // Validar datos del postulante
         $validated = $request->validate([
             'nombre'              => 'required|string|max:255',
@@ -75,6 +111,8 @@ class PostulacionPostulanteController extends Controller
         $postulante = Postulante::create([
             'nombre'              => $validated['nombre'],
             'apellidos'           => $validated['apellidos'],
+            'correo'              => $validated['correo'],
+            'telefono'            => $validated['telefono'] ?? null,
             'ci'                  => $validated['ci'],
             'fecha_nacimiento'    => $validated['fecha_nacimiento'],
             'sexo'                => $validated['sexo'],
@@ -89,7 +127,7 @@ class PostulacionPostulanteController extends Controller
 
         // Crear postulación
         $postulacion = Postulacion::create([
-            'id_postulante'       => $postulante->id,
+            'id_postulante'       => $postulante->id_postulante,
             'id_carrera_opcion_1' => $validated['id_carrera_opcion_1'],
             'id_carrera_opcion_2' => $validated['id_carrera_opcion_2'],
             'fecha_postulacion'   => now(),

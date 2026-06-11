@@ -6,27 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\Bitacora;
 use App\Models\Pago;
 use App\Models\Postulacion;
+use App\Models\Usuario;
+use App\Services\BitacoraService;
+use App\Services\ResendEmailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Stripe\Checkout\Session;
 use Stripe\Stripe;
 
 class PagoController extends Controller
 {
-    /**
-     * Monto fijo de inscripción al CUP (en centavos para Stripe).
-     * Ejemplo: 350 Bs = 35000 centavos (si se maneja en bolivianos como centavos).
-     * Ajusta según la moneda y costo real del sistema.
-     */
-    const MONTO_INSCRIPCION_CENTAVOS = 35000; // 350.00 Bs
-
+    const MONTO_INSCRIPCION_CENTAVOS = 35000;
     const MONEDA = 'bob';
 
-    /**
-     * Muestra el listado de pagos registrados en el sistema.
-     *
-     * @return \Inertia\Response
-     */
     public function index()
     {
         $pagos = Pago::with('postulacion.postulante')
@@ -52,42 +46,42 @@ class PagoController extends Controller
         ]);
     }
 
-    /**
-     * Crea una sesión de pago en Stripe Checkout para una postulación.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function createCheckoutSession(Request $request)
     {
         $request->validate([
             'id_postulacion' => 'required|integer|exists:postulacion,id',
+            'token'          => 'nullable|string|max:64',
         ]);
 
         $idPostulacion = $request->input('id_postulacion');
-        $idUsuario = session('usuario_id');
+        $token = $request->input('token');
 
-        // 1. Verificar que el usuario autenticado exista
-        if (!$idUsuario) {
-            return response()->json(['error' => 'Usuario no autenticado'], 401);
-        }
-
-        // 2. Obtener la postulación con su postulante
         $postulacion = Postulacion::with('postulante')->find($idPostulacion);
 
         if (!$postulacion) {
             return response()->json(['error' => 'Postulación no encontrada'], 404);
         }
 
-        // 3. Validar que el postulante corresponda al usuario logueado (seguridad)
-        $postulante = $postulacion->postulante;
-        if (!$postulante || $postulante->id_usuario != $idUsuario) {
-            return response()->json([
-                'error' => 'No tienes permisos para realizar el pago de esta postulación',
-            ], 403);
+        $idUsuario = null;
+
+        if ($token) {
+            if ($postulacion->token_pago !== $token) {
+                return response()->json(['error' => 'Token de pago inválido o ya utilizado'], 403);
+            }
+        } else {
+            $idUsuario = session('usuario_id');
+            if (!$idUsuario) {
+                return response()->json(['error' => 'Usuario no autenticado'], 401);
+            }
+
+            $postulante = $postulacion->postulante;
+            if (!$postulante || $postulante->id_usuario != $idUsuario) {
+                return response()->json([
+                    'error' => 'No tienes permisos para realizar el pago de esta postulación',
+                ], 403);
+            }
         }
 
-        // 4. Validar que no exista ya un pago confirmado para esta postulación
         $pagoExistente = Pago::where('id_postulacion', $idPostulacion)
             ->where('estado_pago', 'Confirmado')
             ->first();
@@ -98,24 +92,20 @@ class PagoController extends Controller
             ], 409);
         }
 
-        // 5. El monto NO viene del frontend, se define en el backend (seguridad)
         $montoCentavos = self::MONTO_INSCRIPCION_CENTAVOS;
         $montoBolivianos = $montoCentavos / 100;
 
-        // 6. Registrar en BITACORA: inicio de solicitud de pago
         Bitacora::create([
-            'accion'        => "Solicitud de pago iniciada por usuario ID {$idUsuario} para postulación ID {$idPostulacion}",
-            'fecha_hora'    => now(),
-            'ip'            => $request->ip(),
-            'id_usuario'    => $idUsuario,
+            'accion'         => "Solicitud de pago iniciada para postulación ID {$idPostulacion}" . ($idUsuario ? " por usuario ID {$idUsuario}" : " vía token"),
+            'fecha_hora'     => now(),
+            'ip'             => $request->ip(),
+            'id_usuario'     => $idUsuario,
             'tabla_afectada' => 'pago',
         ]);
 
-        // 7. Configurar Stripe
         Stripe::setApiKey(config('services.stripe.secret'));
 
         try {
-            // 8. Crear la sesión de Checkout en Stripe
             $session = Session::create([
                 'payment_method_types' => ['card'],
                 'mode'                 => 'payment',
@@ -136,11 +126,10 @@ class PagoController extends Controller
                 'cancel_url'  => url('/financiero/pago/cancelado?id_postulacion=' . $idPostulacion),
                 'metadata'    => [
                     'id_postulacion' => (string) $idPostulacion,
-                    'id_usuario'     => (string) $idUsuario,
+                    'id_usuario'     => (string) ($idUsuario ?? 0),
                 ],
             ]);
 
-            // 9. Crear registro del pago en estado "Pendiente"
             Pago::create([
                 'id_postulacion'  => $idPostulacion,
                 'monto'           => $montoBolivianos,
@@ -150,7 +139,6 @@ class PagoController extends Controller
                 'cod_transaccion' => $session->id,
             ]);
 
-            // 10. Devolver la URL de Checkout al frontend
             return response()->json([
                 'url' => $session->url,
             ]);
@@ -166,33 +154,14 @@ class PagoController extends Controller
         }
     }
 
-    /**
-     * Página de éxito después del pago.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Inertia\Response
-     */
     public function pagoExito(Request $request)
     {
-        $sessionId = $request->input('session_id');
         $idPostulacion = $request->input('id_postulacion');
+        $sessionId = $request->input('session_id');
 
-        // La confirmación real se hará vía Webhook (CU11)
-        // Aquí solo mostramos la vista de éxito
-        return inertia('Financiero/PasarelaPago', [
-            'status'         => 'success',
-            'session_id'     => $sessionId,
-            'id_postulacion' => $idPostulacion,
-            'mensaje'        => '¡Pago procesado correctamente! Tu inscripción está siendo verificada.',
-        ]);
+        return redirect('/preinscripcion?id=' . $idPostulacion . '&status=success&session_id=' . urlencode($sessionId ?? ''));
     }
 
-    /**
-     * Página cuando el usuario cancela el pago.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Inertia\Response
-     */
     public function pagoCancelado(Request $request)
     {
         $idPostulacion = $request->input('id_postulacion');
@@ -202,5 +171,143 @@ class PagoController extends Controller
             'id_postulacion' => $idPostulacion,
             'mensaje'        => 'El proceso de pago fue cancelado. Puedes intentarlo nuevamente cuando quieras.',
         ]);
+    }
+
+    public function handleWebhook(Request $request)
+    {
+        $payload = $request->getContent();
+        $sigHeader = $request->header('Stripe-Signature');
+        $endpointSecret = config('services.stripe.webhook_secret');
+
+        if (!$endpointSecret) {
+            Log::error('STRIPE_WEBHOOK_SECRET no configurado en .env');
+            return response('Webhook secret not configured', 500);
+        }
+
+        try {
+            $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
+        } catch (\UnexpectedValueException $e) {
+            Log::error('Stripe webhook: payload inválido', ['error' => $e->getMessage()]);
+            return response('Invalid payload', 400);
+        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+            Log::error('Stripe webhook: firma inválida', ['error' => $e->getMessage()]);
+            return response('Invalid signature', 400);
+        }
+
+        if ($event->type === 'checkout.session.completed') {
+            $session = $event->data->object;
+            $idPostulacion = $session->metadata->id_postulacion ?? null;
+
+            if (!$idPostulacion) {
+                Log::error('Stripe webhook: metadata sin id_postulacion', ['session_id' => $session->id]);
+                return response('Missing id_postulacion in metadata', 400);
+            }
+
+            try {
+                DB::beginTransaction();
+
+                $pago = Pago::where('cod_transaccion', $session->id)->first();
+                if (!$pago) {
+                    Log::warning('Stripe webhook: pago no encontrado para sesión', ['session_id' => $session->id]);
+                    DB::rollBack();
+                    return response('Pago no encontrado', 404);
+                }
+
+                if ($pago->estado_pago === 'Confirmado') {
+                    DB::rollBack();
+                    return response('Pago ya confirmado', 200);
+                }
+
+                $pago->update(['estado_pago' => 'Confirmado']);
+
+                $postulacion = Postulacion::with('postulante')->findOrFail($idPostulacion);
+
+                $postulacion->update([
+                    'estado_postulacion' => 'Aprobado',
+                    'token_pago'         => null,
+                ]);
+
+                $postulante = $postulacion->postulante;
+
+                $password = substr(bin2hex(random_bytes(4)), 0, 8);
+
+                $usuario = Usuario::create([
+                    'nombre'    => $postulante->nombre,
+                    'apellidos' => $postulante->apellidos,
+                    'correo'    => $postulante->correo,
+                    'password'  => Hash::make($password),
+                    'id_rol'    => 5,
+                    'telefono'  => $postulante->telefono,
+                    'estado'    => 'Activo',
+                ]);
+
+                $postulante->update(['id_usuario' => $usuario->id]);
+
+                DB::commit();
+
+                try {
+                    $resendService = new ResendEmailService();
+                    $nombreCompleto = e($postulante->nombre . ' ' . $postulante->apellidos);
+                    $loginUrl = url('/login');
+                    $html = <<<HTML
+                    <h1>Inscripción Confirmada - CUP FICCT</h1>
+                    <p>Hola, <strong>{$nombreCompleto}</strong>.</p>
+                    <p>Tu pago ha sido <strong>confirmado</strong> y tu inscripción al <strong>Curso Preuniversitario FICCT</strong> está completa.</p>
+                    <p>A continuación, tus credenciales de acceso al sistema:</p>
+                    <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
+                        <p><strong>Usuario:</strong> {$postulante->correo}</p>
+                        <p><strong>Contraseña:</strong> {$password}</p>
+                    </div>
+                    <p style="text-align:center;margin:30px 0;">
+                        <a href='{$loginUrl}' style='display:inline-block;padding:14px 32px;background:#059669;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;'>Ingresar al sistema</a>
+                    </p>
+                    <p style="color:#666;font-size:13px;">Recomendamos cambiar tu contraseña después del primer inicio de sesión.</p>
+                    <hr>
+                    <p style="color:#666;font-size:12px;">Curso Preuniversitario FICCT — Facultad de Ciencias de la Computación y Telecomunicaciones</p>
+                    HTML;
+
+                    $resendService->enviar($postulante->correo, 'Credenciales de acceso - CUP FICCT', $html);
+                } catch (\Throwable $e) {
+                    Log::error('No se pudo enviar correo con credenciales.', [
+                        'error' => $e->getMessage(),
+                        'id_postulacion' => $idPostulacion,
+                    ]);
+                }
+
+                BitacoraService::registrar(
+                    "Pago confirmado vía webhook Stripe - Postulación #{$idPostulacion}",
+                    null,
+                    'pago'
+                );
+
+                BitacoraService::registrar(
+                    "Postulación #{$idPostulacion} aceptada - pago confirmado",
+                    null,
+                    'postulacion'
+                );
+
+                BitacoraService::registrar(
+                    "Usuario postulante creado automáticamente - {$postulante->correo}",
+                    $usuario->id,
+                    'usuario'
+                );
+
+                Log::info('Webhook Stripe procesado exitosamente', [
+                    'session_id' => $session->id,
+                    'id_postulacion' => $idPostulacion,
+                    'id_usuario_creado' => $usuario->id,
+                ]);
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                Log::error('Error procesando webhook Stripe: ' . $e->getMessage(), [
+                    'session_id' => $session->id,
+                    'id_postulacion' => $idPostulacion,
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                return response('Error processing webhook', 500);
+            }
+        }
+
+        return response('Webhook received', 200);
     }
 }

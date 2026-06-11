@@ -9,7 +9,7 @@ export default function PostulacionesPostulantesIndex({ postulaciones, filtros }
     const aplicarFiltros = (e) => { e.preventDefault(); router.get('/admin/postulaciones-postulantes', { busqueda: busqueda || '', estado: estado || '' }, { preserveState: true }); };
     const limpiarFiltros = () => { setBusqueda(''); setEstado(''); router.get('/admin/postulaciones-postulantes'); };
 
-    const colores = { 'Pendiente': 'bg-amber-100 text-amber-700 border-amber-200', 'Observado': 'bg-orange-100 text-orange-700 border-orange-200', 'Rechazado': 'bg-red-100 text-red-700 border-red-200', 'Aprobado': 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+    const colores = { 'Pendiente': 'bg-amber-100 text-amber-700 border-amber-200', 'Observado': 'bg-orange-100 text-orange-700 border-orange-200', 'Rechazado': 'bg-red-100 text-red-700 border-red-200', 'Pago': 'bg-blue-100 text-blue-700 border-blue-200', 'Aprobado': 'bg-emerald-100 text-emerald-700 border-emerald-200' };
     const formatearFecha = (f) => { if (!f) return '—'; const d = new Date(f); return d.toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
 
     return (
@@ -28,7 +28,7 @@ export default function PostulacionesPostulantesIndex({ postulaciones, filtros }
                         <div><label className="mb-1.5 block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Buscar</label><input type="text" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Nro. formulario..." className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
                         <div><label className="mb-1.5 block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Estado</label>
                             <select value={estado} onChange={(e) => setEstado(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Todos</option><option value="Pendiente">Pendiente</option><option value="Observado">Observado</option><option value="Rechazado">Rechazado</option><option value="Aprobado">Aprobado</option>
+                                <option value="">Todos</option><option value="Pendiente">Pendiente</option><option value="Observado">Observado</option><option value="Rechazado">Rechazado</option><option value="Pago">Pago</option><option value="Aprobado">Aprobado</option>
                             </select>
                         </div>
                         <div className="flex items-end gap-2">

@@ -24,6 +24,7 @@ class Postulacion extends Model
         'fecha_revision',
         'id_usuario_revisor',
         'estado_postulacion',
+        'token_pago',
     ];
 
     protected function casts(): array
@@ -36,7 +37,7 @@ class Postulacion extends Model
 
     public function postulante()
     {
-        return $this->belongsTo(Postulante::class, 'id_postulante', 'id');
+        return $this->belongsTo(Postulante::class, 'id_postulante', 'id_postulante');
     }
 
     public function carrera1()
