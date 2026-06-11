@@ -43,12 +43,12 @@ class Postulacion extends Model
 
     public function carrera1()
     {
-        return $this->belongsTo(Carrera::class, 'id_carrera_opcion_1');
+        return $this->belongsTo(Carrera::class, 'id_carrera_opcion_1', 'id_carrera');
     }
 
     public function carrera2()
     {
-        return $this->belongsTo(Carrera::class, 'id_carrera_opcion_2');
+        return $this->belongsTo(Carrera::class, 'id_carrera_opcion_2', 'id_carrera');
     }
 
     public function revisor()

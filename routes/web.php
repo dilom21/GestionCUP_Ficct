@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\GrupoController;
 use App\Http\Controllers\Admin\HorarioController;
 use App\Http\Controllers\Admin\AsignacionAcademicaController;
 use App\Http\Controllers\Admin\DocenteMateriaController;
+use App\Http\Controllers\Admin\PostulanteGestionController;
 use App\Http\Controllers\Docente\AsistenciaController as DocenteAsistenciaController;
 use App\Http\Controllers\Postulante\AsistenciaController as PostulanteAsistenciaController;
 use App\Http\Controllers\Admin\PostulacionDocenteRevisionController;
@@ -75,7 +76,6 @@ Route::post('/logout', [AuthManualController::class, 'cerrarSesion'])->name('log
 
 Route::post('/stripe/webhook', [PagoController::class, 'handleWebhook'])->name('stripe.webhook');
 
-
 /*
 |--------------------------------------------------------------------------
 | Paneles según rol (protegidos por middleware de sesión)
@@ -89,6 +89,11 @@ Route::middleware('auth.sesion')->group(function () {
     Route::post('/admin/docentes', [DocenteController::class, 'store'])->name('admin.docentes.store');
     Route::match(['put', 'patch'], '/admin/docentes/{id}', [DocenteController::class, 'update'])->name('admin.docentes.update');
     Route::post('/admin/docentes/{id}/cambiar-estado', [DocenteController::class, 'cambiarEstado'])->name('admin.docentes.cambiar-estado');
+
+    // Postulantes - gestión de perfiles (solo los que completaron el proceso)
+    Route::get('/admin/postulantes-gestion', [PostulanteGestionController::class, 'index'])->name('admin.postulantes.gestion');
+    Route::match(['put', 'patch'], '/admin/postulantes-gestion/{id}', [PostulanteGestionController::class, 'update'])->name('admin.postulantes.gestion.update');
+    Route::post('/admin/postulantes-gestion/{id}/cambiar-estado', [PostulanteGestionController::class, 'cambiarEstado'])->name('admin.postulantes.gestion.cambiar-estado');
 
     // Postulaciones docentes - revisión administrativa
     Route::get('/admin/postulaciones-docentes', [PostulacionDocenteRevisionController::class, 'index'])->name('admin.postulaciones.docentes');
@@ -131,34 +136,10 @@ Route::middleware('auth.sesion')->group(function () {
         ]);
     })->name('admin.postulaciones.docentes.descargar');
 
-    Route::get('/admin/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Administrador') {
-            return redirect('/login');
-        }
-        return Inertia::render('Admin/Dashboard');
-    })->name('admin.dashboard');
-
-    Route::get('/administrativo/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Administrativo') {
-            return redirect('/login');
-        }
-        return Inertia::render('Administrativo/Dashboard');
-    })->name('administrativo.dashboard');
-
-    Route::get('/docente/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Docente') {
-            return redirect('/login');
-        }
-        return Inertia::render('Docente/Dashboard');
-    })->name('docente.dashboard');
-
-    Route::get('/director/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Director de Carrera') {
-            return redirect('/login');
-        }
-        return Inertia::render('Director/Dashboard');
-    })->name('director.dashboard');
-
+    Route::get('/panel', function () {
+        return Inertia::render('Panel/Dashboard');
+    })->name('panel.dashboard');
+    
     /*
     |--------------------------------------------------------------------------
     | CU13: Gestión de Aulas
@@ -182,7 +163,7 @@ Route::middleware('auth.sesion')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | CU12 (CU14): Gestión de Asignación Académica
+    | Gestión de Asignación Académica
     |--------------------------------------------------------------------------
     */
     Route::get('/asignaciones-academicas', [AsignacionAcademicaController::class, 'index'])->name('asignaciones.index');
@@ -195,7 +176,7 @@ Route::middleware('auth.sesion')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | CU12: Gestión de Horarios (Validación Estricta de Cruces)
+    | Gestión de Horarios
     |--------------------------------------------------------------------------
     */
     Route::get('/horarios', [HorarioController::class, 'index'])->name('horarios.index');

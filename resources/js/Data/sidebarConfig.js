@@ -142,6 +142,14 @@ const sidebarModules = [
         href: '#',
         permiso: 'docentes_materias.leer',
       },
+      {
+        label: 'Gestión de Postulantes',
+        entidad: 'gestion_postulantes',
+        icon: '👨‍🎓',
+        color: 'emerald',
+        href: '#',
+        permiso: 'postulaciones_postulantes.leer',
+      },
     ],
   },
   {
@@ -230,7 +238,7 @@ const sidebarModules = [
         entidad: 'asistencia_docente',
         icon: '👨‍🏫',
         color: 'green',
-        href: route('admin.asistencia.index', { tab: 'docente' }),
+        href: '#',
         permiso: 'asistencia_docente.leer',
       },
       {
@@ -238,7 +246,7 @@ const sidebarModules = [
         entidad: 'asistencia_estudiantes',
         icon: '👤',
         color: 'green',
-        href: route('admin.asistencia.index', { tab: 'estudiante' }),
+        href: '#',
         permiso: 'asistencia_estudiantes.leer',
       },
     ],
@@ -255,13 +263,6 @@ const sidebarModules = [
   },
 ];
 
-/**
- * Obtiene todos los items (botones) del sidebar agrupados por módulo.
- * Útil para la UI de permisos de roles.
- * 
- * IMPORTANTE: SOLO se retornan los items definidos en `children[]` de cada módulo.
- * Si un módulo tiene children vacío, no aparecerá ningún item en permisos.
- */
 export function getSidebarItemsByModule() {
   const result = {};
   sidebarModules.forEach((mod) => {
@@ -277,9 +278,6 @@ export function getSidebarItemsByModule() {
   return result;
 }
 
-/**
- * Obtiene los items (botones) de un módulo específico por su nombre.
- */
 export function getSidebarItemsForModule(moduloLabel) {
   const mod = sidebarModules.find((m) => m.label === moduloLabel);
   if (!mod) return [];
