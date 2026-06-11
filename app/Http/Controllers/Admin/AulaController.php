@@ -7,8 +7,7 @@ use Illuminate\Http\Request;
 
 class AulaController extends Controller
 {
-    public function index()
-    {
+    public function index(){
         return inertia('Administrativo/Aulas/Index');
     }
 }

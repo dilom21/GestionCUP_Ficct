@@ -155,12 +155,6 @@ class AuthManualController extends Controller
 
     private function redirigirSegunRol(string $rolNombre): string
     {
-        return match (strtolower($rolNombre)) {
-            'administrador'        => '/admin/dashboard',
-            'administrativo'       => '/administrativo/dashboard',
-            'docente'              => '/docente/dashboard',
-            'director de carrera'  => '/director/dashboard',
-            default                => '/login',
-        };
+        return '/panel';
     }
 }

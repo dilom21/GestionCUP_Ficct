@@ -155,7 +155,7 @@ export default function SidebarAdmin() {
                 label: mod.label,
                 permisoLeer: mod.permisoLeer,
                 icon: getIconForModule(mod.entidad),
-                href: mod.entidad === 'dashboard' ? route('admin.dashboard') : '#',
+                href: mod.entidad === 'dashboard' ? route('panel.dashboard') : '#',
             };
         });
     }, []);

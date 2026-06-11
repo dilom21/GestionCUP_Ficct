@@ -130,33 +130,9 @@ Route::middleware('auth.sesion')->group(function () {
         ]);
     })->name('admin.postulaciones.docentes.descargar');
 
-    Route::get('/admin/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Administrador') {
-            return redirect('/login');
-        }
-        return Inertia::render('Admin/Dashboard');
-    })->name('admin.dashboard');
-
-    Route::get('/administrativo/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Administrativo') {
-            return redirect('/login');
-        }
-        return Inertia::render('Administrativo/Dashboard');
-    })->name('administrativo.dashboard');
-
-    Route::get('/docente/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Docente') {
-            return redirect('/login');
-        }
-        return Inertia::render('Docente/Dashboard');
-    })->name('docente.dashboard');
-
-    Route::get('/director/dashboard', function () {
-        if (session('usuario_rol_nombre') !== 'Director de Carrera') {
-            return redirect('/login');
-        }
-        return Inertia::render('Director/Dashboard');
-    })->name('director.dashboard');
+    Route::get('/panel', function () {
+        return Inertia::render('Panel/Dashboard');
+    })->name('panel.dashboard');
     
     /*
     |--------------------------------------------------------------------------
