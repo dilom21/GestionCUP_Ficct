@@ -10,16 +10,35 @@
  */
 
 export const ENTIDAD_INFO = {
-    usuarios:        { nombre: 'Usuarios',       icono: '👤', color: 'blue' },
-    roles:           { nombre: 'Roles',          icono: '🔐', color: 'purple' },
-    dashboard:       { nombre: 'Dashboard',      icono: '📊', color: 'emerald' },
-    postulantes:     { nombre: 'Postulantes',    icono: '📋', color: 'amber' },
-    pagos:           { nombre: 'Pagos',          icono: '💰', color: 'green' },
-    grupos_horarios: { nombre: 'Grupos Horarios',icono: '📅', color: 'cyan' },
-    docentes:        { nombre: 'Docentes',       icono: '👨‍🏫', color: 'orange' },
-    materias_notas:  { nombre: 'Materias y Notas',icono: '📚', color: 'rose' },
-    cupos_admision:  { nombre: 'Cupos y Admisión',icono: '🎯', color: 'teal' },
-    reportes:        { nombre: 'Reportes',       icono: '📈', color: 'slate' },
+    // ── Módulos principales (padres / módulos) ──
+    dashboard:            { nombre: 'Dashboard',               icono: '📊', color: 'emerald' },
+    postulantes:          { nombre: 'Postulaciones y Requisitos',icono: '📋', color: 'amber' },
+    pagos:                { nombre: 'Pagos y Habilitación',    icono: '💰', color: 'green' },
+    grupos_horarios:      { nombre: 'Grupos Horarios y Aulas', icono: '📅', color: 'cyan' },
+    docentes:             { nombre: 'Docentes y Carga Horaria',icono: '👨‍🏫', color: 'orange' },
+    materias_notas:       { nombre: 'Materias y Notas',        icono: '📚', color: 'rose' },
+    cupos_admision:       { nombre: 'Cupos y Admisión',        icono: '🎯', color: 'teal' },
+    usuarios_seguridad:   { nombre: 'Usuarios y Seguridad',    icono: '👥', color: 'blue' },
+    asistencia:           { nombre: 'Asistencia y Control',    icono: '✅', color: 'green' },
+    reportes:             { nombre: 'Reportes',                icono: '📈', color: 'slate' },
+
+    // ── Botones hijos (children del sidebar) ──
+    usuarios:                   { nombre: 'Usuarios',                 icono: '👤',    color: 'blue' },
+    roles:                      { nombre: 'Roles',                    icono: '🔐',    color: 'purple' },
+    carreras:                   { nombre: 'Carreras',                 icono: '🏛️',    color: 'indigo' },
+    bitacora:                   { nombre: 'Auditoria y Bitacora',     icono: '📋',    color: 'blue' },
+    materias:                   { nombre: 'Materias',                 icono: '📖',    color: 'rose' },
+    pagos_listado:              { nombre: 'Pagos',                    icono: '💳',    color: 'green' },
+    postulaciones_docentes:     { nombre: 'Postulaciones Docentes',   icono: '📄',    color: 'amber' },
+    postulaciones_postulantes:  { nombre: 'Postulaciones Postulantes',icono: '👤',    color: 'amber' },
+    aulas:                      { nombre: 'Aulas',                    icono: '🏛️',    color: 'cyan' },
+    grupos:                     { nombre: 'Grupos',                   icono: '👥',    color: 'cyan' },
+    asignacion_academica:       { nombre: 'Asignación Académica',     icono: '📋',    color: 'cyan' },
+    horarios:                   { nombre: 'Horarios',                 icono: '🕐',    color: 'cyan' },
+    gestion_docentes:           { nombre: 'Gestión de Docentes',      icono: '👨‍🏫',   color: 'orange' },
+    docentes_materias:          { nombre: 'Materias por Docente',     icono: '📚',    color: 'orange' },
+    asistencia_docente:         { nombre: 'Asistencia Docente',       icono: '👨‍🏫',   color: 'green' },
+    asistencia_estudiantes:     { nombre: 'Asistencia Estudiantes',   icono: '👤',    color: 'green' },
 };
 
 export const COLORES_ENTIDAD = {
@@ -33,6 +52,7 @@ export const COLORES_ENTIDAD = {
     rose:    { bg: 'bg-rose-50',         border: 'border-rose-200',        text: 'text-rose-700',       badge: 'bg-rose-100 text-rose-600',       dot: 'bg-rose-500' },
     teal:    { bg: 'bg-teal-50',         border: 'border-teal-200',        text: 'text-teal-700',       badge: 'bg-teal-100 text-teal-600',       dot: 'bg-teal-500' },
     slate:   { bg: 'bg-slate-50',        border: 'border-slate-200',       text: 'text-slate-700',      badge: 'bg-slate-100 text-slate-600',     dot: 'bg-slate-500' },
+    indigo:  { bg: 'bg-indigo-50',       border: 'border-indigo-200',      text: 'text-indigo-700',     badge: 'bg-indigo-100 text-indigo-600',   dot: 'bg-indigo-500' },
 };
 
 export const OPCIONES_PERMISO = {

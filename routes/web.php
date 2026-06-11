@@ -1,7 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\AulaController;
 use App\Http\Controllers\Admin\BitacoraController;
 use App\Http\Controllers\Admin\DocenteController;
+use App\Http\Controllers\Admin\GrupoController;
+use App\Http\Controllers\Admin\HorarioController;
+use App\Http\Controllers\Admin\AsignacionAcademicaController;
+use App\Http\Controllers\Admin\DocenteMateriaController;
+use App\Http\Controllers\Docente\AsistenciaController as DocenteAsistenciaController;
+use App\Http\Controllers\Postulante\AsistenciaController as PostulanteAsistenciaController;
 use App\Http\Controllers\Admin\PostulacionDocenteRevisionController;
 use App\Http\Controllers\Admin\PostulacionPostulanteRevisionController;
 use App\Http\Controllers\Auth\AuthManualController;
@@ -154,6 +161,50 @@ Route::middleware('auth.sesion')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | CU13: Gestión de Aulas
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/aulas', [AulaController::class, 'index'])->name('aulas.index');
+    Route::post('/aulas', [AulaController::class, 'store'])->name('aulas.store');
+    Route::put('/aulas/{aula}', [AulaController::class, 'update'])->name('aulas.update');
+    Route::delete('/aulas/{aula}', [AulaController::class, 'destroy'])->name('aulas.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU11: Gestión de Grupos
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/grupos', [GrupoController::class, 'index'])->name('grupos.index');
+    Route::post('/grupos', [GrupoController::class, 'store'])->name('grupos.store');
+    Route::put('/grupos/{grupo}', [GrupoController::class, 'update'])->name('grupos.update');
+    Route::delete('/grupos/{grupo}', [GrupoController::class, 'destroy'])->name('grupos.destroy');
+    Route::post('/grupos/generar', [GrupoController::class, 'generar'])->name('grupos.generar');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU12 (CU14): Gestión de Asignación Académica
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/asignaciones-academicas', [AsignacionAcademicaController::class, 'index'])->name('asignaciones.index');
+    Route::post('/asignaciones-academicas', [AsignacionAcademicaController::class, 'store'])->name('asignaciones.store');
+    Route::get('/docentes-materias', [DocenteMateriaController::class, 'index'])->name('docentes.materias.index');
+    Route::post('/docentes-materias', [DocenteMateriaController::class, 'store'])->name('docentes.materias.store');
+    Route::delete('/docentes-materias/{idDocente}/{idMateria}', [DocenteMateriaController::class, 'destroy'])->name('docentes.materias.destroy');
+    Route::put('/asignaciones-academicas/{asignacionAcademica}', [AsignacionAcademicaController::class, 'update'])->name('asignaciones.update');
+    Route::delete('/asignaciones-academicas/{asignacionAcademica}', [AsignacionAcademicaController::class, 'destroy'])->name('asignaciones.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU12: Gestión de Horarios (Validación Estricta de Cruces)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/horarios', [HorarioController::class, 'index'])->name('horarios.index');
+    Route::post('/horarios', [HorarioController::class, 'store'])->name('horarios.store');
+    Route::put('/horarios/{horario}', [HorarioController::class, 'update'])->name('horarios.update');
+    Route::delete('/horarios/{horario}', [HorarioController::class, 'destroy'])->name('horarios.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
     | CU02: Gestión de Usuarios y Roles
     |--------------------------------------------------------------------------
     */
@@ -196,6 +247,34 @@ Route::middleware('auth.sesion')->group(function () {
     Route::prefix('financiero')->group(function () {
         Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | CU15: Asistencia Docente y Estudiante
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('docente')->group(function () {
+        Route::get('/asistencia', [DocenteAsistenciaController::class, 'index'])->name('docente.asistencia.index');
+        Route::post('/asistencia/generar-qr', [DocenteAsistenciaController::class, 'generarQr'])->name('docente.asistencia.generar-qr');
+        Route::post('/asistencia/generar-pin', [DocenteAsistenciaController::class, 'generarPin'])->name('docente.asistencia.generar-pin');
+        Route::post('/asistencia/entrada', [DocenteAsistenciaController::class, 'registrarEntrada'])->name('docente.asistencia.entrada');
+        Route::post('/asistencia/salida', [DocenteAsistenciaController::class, 'registrarSalida'])->name('docente.asistencia.salida');
+        Route::get('/asistencia/estudiantes', [DocenteAsistenciaController::class, 'obtenerEstudiantes'])->name('docente.asistencia.estudiantes');
+        Route::post('/asistencia/registrar-estudiante', [DocenteAsistenciaController::class, 'registrarEstudiante'])->name('docente.asistencia.registrar-estudiante');
+    });
+
+    Route::prefix('postulante')->group(function () {
+        Route::get('/asistencia', [PostulanteAsistenciaController::class, 'index'])->name('postulante.asistencia.index');
+        Route::post('/asistencia/escanear', [PostulanteAsistenciaController::class, 'escanearQr'])->name('postulante.asistencia.escanear');
+        Route::post('/asistencia/validar-pin', [PostulanteAsistenciaController::class, 'validarPin'])->name('postulante.asistencia.validar-pin');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin: Asistencia y Control (visor con filtros)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/admin/asistencia', [\App\Http\Controllers\Admin\AsistenciaController::class, 'index'])->name('admin.asistencia.index');
 });
 
 Route::post('/financiero/pago/crear-sesion', [PagoController::class, 'createCheckoutSession'])->name('pago.crear-sesion');

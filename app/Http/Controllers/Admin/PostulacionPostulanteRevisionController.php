@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\GestionCup;
+use App\Models\Grupo;
+use App\Models\InscripcionCup;
 use App\Models\Postulacion;
 use App\Models\PostulacionRequisito;
 use App\Services\BitacoraService;
@@ -118,6 +121,57 @@ class PostulacionPostulanteRevisionController extends Controller
 
         $postulacion->update($dataUpdate);
 
+        if ($nuevoEstado === 'Aprobado' && $postulacion->turno) {
+            $gestion = GestionCup::orderBy('id')->first();
+            if ($gestion) {
+                $yaInscrito = InscripcionCup::where('id_postulacion', $postulacion->id)->exists();
+                if (!$yaInscrito) {
+                    $gruposDelTurno = Grupo::where('turno', $postulacion->turno)
+                        ->where('estado', 'Activo')
+                        ->orderBy('sigla')
+                        ->get();
+
+                    $grupoAsignado = null;
+                    $capacidadMax = 80;
+                    foreach ($gruposDelTurno as $grupo) {
+                        $inscritos = InscripcionCup::where('id_grupo', $grupo->id)->count();
+                        if ($inscritos < ($grupo->cupo_maximo ?: $capacidadMax)) {
+                            $grupoAsignado = $grupo;
+                            break;
+                        }
+                    }
+
+                    if (!$grupoAsignado) {
+                        $prefijo = ['Mañana' => 'M', 'Tarde' => 'T', 'Noche' => 'N'][$postulacion->turno] ?? 'X';
+                        $numExistentes = Grupo::where('turno', $postulacion->turno)->count();
+                        $letra = chr(65 + $numExistentes);
+                        $grupoAsignado = Grupo::create([
+                            'id_gestion_cup' => $gestion->id,
+                            'sigla'          => $prefijo . $letra,
+                            'cupo_maximo'    => $capacidadMax,
+                            'turno'          => $postulacion->turno,
+                            'modalidad'      => 'Presencial',
+                            'estado'         => 'Activo',
+                        ]);
+                    }
+
+                    InscripcionCup::create([
+                        'id_postulacion'    => $postulacion->id,
+                        'id_grupo'          => $grupoAsignado->id,
+                        'id_gestion_cup'    => $gestion->id,
+                        'fecha_inscripcion' => now(),
+                        'estado'            => 'Inscrito',
+                    ]);
+
+                    BitacoraService::registrar(
+                        "Postulante asignado al grupo {$grupoAsignado->sigla} (turno {$postulacion->turno})",
+                        session('usuario_id'),
+                        'inscripcion_cup'
+                    );
+                }
+            }
+        }
+
         $correoDestino = $postulacion->postulante?->correo ?? '';
 
         try {
@@ -170,7 +224,21 @@ class PostulacionPostulanteRevisionController extends Controller
             $mensaje .= '<hr><p style="color:#666;font-size:12px;">Curso Preuniversitario FICCT — Facultad de Ciencias de la Computación y Telecomunicaciones</p>';
 
             if ($correoDestino) {
-                $resendService->enviar($correoDestino, $asunto, $mensaje);
+                Log::info('Intentando enviar correo de estado', [
+                    'estado'          => $nuevoEstado,
+                    'destino_original'=> $correoDestino,
+                    'id_postulacion'  => $postulacion->id,
+                ]);
+                $resultado = $resendService->enviar($correoDestino, $asunto, $mensaje);
+                Log::info('Resultado envio Resend', [
+                    'exito'           => $resultado,
+                    'id_postulacion'  => $postulacion->id,
+                ]);
+            } else {
+                Log::warning('No se pudo enviar correo: destinatario vacio', [
+                    'id_postulacion'   => $postulacion->id,
+                    'tiene_postulante' => $postulacion->postulante ? 'si' : 'no',
+                ]);
             }
         } catch (\Throwable $e) {
             Log::error('No se pudo enviar el correo.', [

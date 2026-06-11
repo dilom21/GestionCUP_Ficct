@@ -26,6 +26,9 @@ class DatabaseSeeder extends Seeder
         // Llamar al seeder de módulos, funciones y permisos de roles
         $this->call(RolFuncionSeeder::class);
 
+        // Asignar materias, asignaciones y horarios a docentes existentes
+        $this->call(DocenteAsignacionSeeder::class);
+
         DB::table('gestion_cup')->insertOrIgnore([
             ['id_gestion_cup' => 1, 'nombre_gestion' => '1-2023'],
             ['id_gestion_cup' => 2, 'nombre_gestion' => '2-2023'],

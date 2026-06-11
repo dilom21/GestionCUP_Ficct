@@ -10,14 +10,14 @@ class ResendEmailService
     private string $apiKey;
     private string $fromEmail;
     private string $fromName;
-    private string $testEmail;
+    private string $testEmail = '';
 
     public function __construct()
     {
         $this->apiKey = env('RESEND_API_KEY');
         $this->fromEmail = env('RESEND_FROM_EMAIL');
         $this->fromName = env('RESEND_FROM_NAME');
-        $this->testEmail = env('EMAIL_TEST');
+        $this->testEmail = env('EMAIL_TEST', '');
     }
 
     /**
