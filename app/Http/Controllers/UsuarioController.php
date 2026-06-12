@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Usuario;
+use App\Models\User;
 use App\Models\Rol;
 use App\Models\Bitacora;
 use App\Http\Requests\StoreUsuarioRequest;
@@ -18,7 +18,7 @@ class UsuarioController extends Controller
      */
     public function index()
     {
-        $usuarios = Usuario::with('rol')
+        $usuarios = User::with('rol')
             ->orderBy('apellidos')
             ->orderBy('nombre')
             ->get()
@@ -50,7 +50,7 @@ class UsuarioController extends Controller
         $data = $request->validated();
         $data['password'] = Hash::make($data['password']);
 
-        Usuario::create($data);
+        User::create($data);
 
         // Registrar en bitácora
         Bitacora::create([
@@ -67,11 +67,10 @@ class UsuarioController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUsuarioRequest $request, Usuario $usuario)
+    public function update(UpdateUsuarioRequest $request, User $usuario)
     {
         $data = $request->validated();
 
-        // Solo actualizar password si se proporcionó uno nuevo
         if (empty($data['password'])) {
             unset($data['password']);
         } else {
@@ -80,7 +79,6 @@ class UsuarioController extends Controller
 
         $usuario->update($data);
 
-        // Registrar en bitácora
         Bitacora::create([
             'accion'         => 'ACTUALIZACIÓN',
             'fecha_hora'     => now(),
@@ -92,15 +90,10 @@ class UsuarioController extends Controller
         return redirect()->back()->with('success', 'Usuario actualizado exitosamente.');
     }
 
-    /**
-     * Remove the specified resource from storage (logical delete).
-     */
-    public function destroy(Usuario $usuario)
+    public function destroy(User $usuario)
     {
-        // Eliminado lógico: cambiar estado a 'Inactivo'
         $usuario->update(['estado' => 'Inactivo']);
 
-        // Registrar en bitácora
         Bitacora::create([
             'accion'         => 'ELIMINACIÓN LÓGICA',
             'fecha_hora'     => now(),

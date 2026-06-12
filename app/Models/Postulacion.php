@@ -11,7 +11,6 @@ class Postulacion extends Model
 
     protected $table = 'postulacion';
     protected $primaryKey = 'id';
-    protected $guarded = [];
     public $timestamps = false;
 
     protected $fillable = [
@@ -26,6 +25,7 @@ class Postulacion extends Model
         'estado_postulacion',
         'token_pago',
         'turno',
+        'id_usuario_creado',
     ];
 
     protected function casts(): array

@@ -11,7 +11,6 @@ class Postulante extends Model
 
     protected $table = 'postulante';
     protected $primaryKey = 'id_postulante';
-    protected $guarded = [];
     public $timestamps = false;
 
     protected $fillable = [

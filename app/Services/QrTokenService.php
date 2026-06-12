@@ -17,8 +17,8 @@ class QrTokenService
 {
     const TOKEN_TTL_SECONDS = 15;
     const PIN_TTL_SECONDS = 60;
-    const TOLERANCIA_MINUTOS_ENTRADA = 1440;
-    const TOLERANCIA_MINUTOS_SALIDA = 1440;
+    const TOLERANCIA_MINUTOS_ENTRADA = 15;
+    const TOLERANCIA_MINUTOS_SALIDA = 15;
 
     /**
      * Genera un token temporal para QR (15 segundos de validez).

@@ -32,7 +32,7 @@ class ResendEmailService
     {
         $destinatario = $this->testEmail ?: $to;
 
-        $response = Http::withToken($this->apiKey)
+        $response = Http::timeout(30)->withToken($this->apiKey)
             ->acceptJson()
             ->post('https://api.resend.com/emails', [
                 'from' => "{$this->fromName} <{$this->fromEmail}>",

@@ -89,9 +89,10 @@ class RolFuncionSeeder extends Seeder
             // Módulo: Cupos y Admisión
             ['nombre' => 'Ver Cupos y Admisión',     'permiso' => 'cupos_admision.leer',         'modulo' => 'Cupos y Admisión'],
             // Módulo: Asistencia y Control
-            ['nombre' => 'Ver Asistencia Docente',   'permiso' => 'asistencia_docente.leer',     'modulo' => 'Asistencia y Control'],
+            ['nombre' => 'Ver Módulo Asistencia',     'permiso' => 'asistencia.leer',             'modulo' => 'Asistencia y Control'],
+            ['nombre' => 'Ver Asistencia Docente',    'permiso' => 'asistencia_docente.leer',     'modulo' => 'Asistencia y Control'],
             ['nombre' => 'Gestionar Asistencia Docente','permiso' => 'asistencia_docente.escribir','modulo' => 'Asistencia y Control'],
-            ['nombre' => 'Ver Asistencia Estudiantes','permiso' => 'asistencia_estudiantes.leer', 'modulo' => 'Asistencia y Control'],
+            ['nombre' => 'Ver Asistencia Estudiantes', 'permiso' => 'asistencia_estudiantes.leer', 'modulo' => 'Asistencia y Control'],
             ['nombre' => 'Gestionar Asistencia Estudiantes','permiso' => 'asistencia_estudiantes.escribir','modulo' => 'Asistencia y Control'],
             // Módulo: Reportes
             ['nombre' => 'Ver Reportes',             'permiso' => 'reportes.leer',               'modulo' => 'Reportes'],

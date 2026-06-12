@@ -64,8 +64,17 @@ class PostulacionDocenteRevisionController extends Controller
         ]);
     }
 
+    public function verificarPermiso(string $permiso): void
+    {
+        $permisos = session('usuario_permisos', []);
+        if (!in_array($permiso, $permisos, true)) {
+            abort(403, 'No tienes permisos para realizar esta acción.');
+        }
+    }
+
     public function guardarRevision(Request $request, $id)
     {
+        $this->verificarPermiso('postulaciones_docentes.escribir');
         $postulacion = PostulacionDocente::findOrFail($id);
 
         $request->validate([
@@ -100,6 +109,7 @@ class PostulacionDocenteRevisionController extends Controller
 
     public function cambiarEstado(Request $request, $id, AcademicValidationService $validationService)
     {
+        $this->verificarPermiso('postulaciones_docentes.escribir');
         $postulacion = PostulacionDocente::findOrFail($id);
 
         $request->validate([
@@ -113,6 +123,16 @@ class PostulacionDocenteRevisionController extends Controller
         ]);
 
         $nuevoEstado = $request->estado_postulacion;
+        $estadoActual = $postulacion->estado_postulacion;
+
+        $estadosFinales = ['Aprobado'];
+        if (in_array($estadoActual, $estadosFinales)) {
+            return back()->with('error', "La postulación ya está {$estadoActual}. No se puede cambiar el estado.")->withInput();
+        }
+        if ($nuevoEstado === 'Aprobado' && $estadoActual === 'Aprobado') {
+            return back()->with('error', 'La postulación ya está aprobada.')->withInput();
+        }
+
         $nombrePostulante = $postulacion->nombre . ' ' . $postulacion->apellido;
 
         // Si es aprobado, crear automáticamente el usuario docente
@@ -125,107 +145,109 @@ class PostulacionDocenteRevisionController extends Controller
                 ])->withInput();
             }
 
-            $usuarioCreado = User::create([
-                'correo'            => $request->correo_acceso,
-                'password'          => Hash::make($request->password_acceso),
-                'estado'            => 'Activo',
-                'nombre'            => $postulacion->nombre,
-                'apellidos'         => $postulacion->apellido,
-                'telefono'          => $postulacion->telefono,
-                'id_rol'            => 4,
-                'intentos_fallidos' => 0,
-                'bloqueado_hasta'   => null,
-            ]);
+            DB::beginTransaction();
+            try {
+                $usuarioCreado = User::create([
+                    'correo'            => $request->correo_acceso,
+                    'password'          => Hash::make($request->password_acceso),
+                    'estado'            => 'Activo',
+                    'nombre'            => $postulacion->nombre,
+                    'apellidos'         => $postulacion->apellido,
+                    'telefono'          => $postulacion->telefono,
+                    'id_rol'            => 4,
+                    'intentos_fallidos' => 0,
+                    'bloqueado_hasta'   => null,
+                ]);
 
-            // Guardar referencia al usuario creado en la postulación
-            $postulacion->update(['id_usuario_creado' => $usuarioCreado->id]);
+                // Guardar referencia al usuario creado en la postulación
+                $postulacion->update(['id_usuario_creado' => $usuarioCreado->id]);
 
-            // Crear perfil Docente vinculado al usuario
-            $docente = Docente::create([
-                'id_usuario'            => $usuarioCreado->id,
-                'ci'                    => $postulacion->ci,
-                'profesion'             => $postulacion->profesion ?? '',
-                'grado_academico'       => $postulacion->grado_academico ?? '',
-                'experiencia_anios'     => $postulacion->experiencia_anios ?? 0,
-                'maximo_grupos'         => 4,
-                'id_postulacion_docente' => $postulacion->id,
-            ]);
+                // Crear perfil Docente vinculado al usuario
+                $docente = Docente::create([
+                    'id_usuario'            => $usuarioCreado->id,
+                    'ci'                    => $postulacion->ci,
+                    'profesion'             => $postulacion->profesion ?? '',
+                    'grado_academico'       => $postulacion->grado_academico ?? '',
+                    'experiencia_anios'     => $postulacion->experiencia_anios ?? 0,
+                    'maximo_grupos'         => 4,
+                    'id_postulacion_docente' => $postulacion->id,
+                ]);
 
-            // Auto-asignar materias seleccionadas en la postulación
-            $materiasIds = $postulacion->materias()->pluck('materia.id_materia')->toArray();
-            if (!empty($materiasIds)) {
-                $docenteMateriaData = [];
-                foreach ($materiasIds as $idMateria) {
-                    $docenteMateriaData[] = [
-                        'id_docente' => $docente->id,
-                        'id_materia' => $idMateria,
-                        'estado'     => 'Activo',
-                    ];
-                }
-                DB::table('docente_materia')->insert($docenteMateriaData);
-
-                // Auto-crear asignación académica y horario con validación de cruces
-                $gestionActiva = DB::table('gestion_cup')->first();
-                $grupos = DB::table('grupo')->where('estado', 'Activo')->get();
-                $aulas = DB::table('aula')->where('estado', 'Activo')->orderBy('capacidad_maxima', 'desc')->get();
-
-                if ($gestionActiva && $grupos->isNotEmpty() && $aulas->isNotEmpty()) {
-                    $disponibilidad = strtolower($postulacion->disponibilidad_horaria ?? 'mañana');
-                    $turnosMap = [
-                        'mañana' => ['turno' => 'Mañana', 'inicio' => '07:00', 'fin' => '09:15'],
-                        'tarde'  => ['turno' => 'Tarde',  'inicio' => '14:00', 'fin' => '16:15'],
-                        'noche'  => ['turno' => 'Noche',  'inicio' => '18:00', 'fin' => '20:15'],
-                    ];
-
-                    $turnoSeleccionado = $turnosMap['mañana'];
-                    foreach ($turnosMap as $key => $t) {
-                        if (str_contains($disponibilidad, $key)) {
-                            $turnoSeleccionado = $t;
-                            break;
-                        }
+                // Auto-asignar materias seleccionadas en la postulación
+                $materiasIds = $postulacion->materias()->pluck('materia.id_materia')->toArray();
+                if (!empty($materiasIds)) {
+                    $docenteMateriaData = [];
+                    foreach ($materiasIds as $idMateria) {
+                        $docenteMateriaData[] = [
+                            'id_docente' => $docente->id,
+                            'id_materia' => $idMateria,
+                            'estado'     => 'Activo',
+                        ];
                     }
+                    DB::table('docente_materia')->insert($docenteMateriaData);
 
-                    $grupoCompatible = $grupos->firstWhere('turno', $turnoSeleccionado['turno']);
-                    if (!$grupoCompatible) {
-                        $grupoCompatible = $grupos->first();
-                    }
+                    // Auto-crear asignación académica y horario con validación de cruces
+                    $gestionActiva = DB::table('gestion_cup')->first();
+                    $grupos = DB::table('grupo')->where('estado', 'Activo')->get();
+                    $aulas = DB::table('aula')->where('estado', 'Activo')->orderBy('capacidad_maxima', 'desc')->get();
 
-                    $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-                    $asignacionesCreadas = 0;
+                    if ($gestionActiva && $grupos->isNotEmpty() && $aulas->isNotEmpty()) {
+                        $disponibilidad = strtolower($postulacion->disponibilidad_horaria ?? 'mañana');
+                        $turnosMap = [
+                            'mañana' => ['turno' => 'Mañana', 'inicio' => '07:00', 'fin' => '09:15'],
+                            'tarde'  => ['turno' => 'Tarde',  'inicio' => '14:00', 'fin' => '16:15'],
+                            'noche'  => ['turno' => 'Noche',  'inicio' => '18:00', 'fin' => '20:15'],
+                        ];
 
-                    foreach ($materiasIds as $idx => $idMateria) {
-                        if ($asignacionesCreadas >= ($docente->maximo_grupos ?? 4)) {
-                            break;
-                        }
-
-                        try {
-                            $validationService->validarLimiteGruposDocente($docente->id, $gestionActiva->id);
-                        } catch (\Throwable $e) {
-                            break;
-                        }
-
-                        $asignacionId = DB::table('asignacion_academica')->insertGetId([
-                            'id_materia'      => $idMateria,
-                            'id_grupo'        => $grupoCompatible->id,
-                            'id_docente'      => $docente->id,
-                            'id_gestion_cup'  => $gestionActiva->id,
-                            'carga_horaria'   => 80,
-                            'estado'          => 'Activo',
-                        ]);
-
-                        $horarioCreado = false;
-                        $offset = array_search(($diasSemana[$idx % count($diasSemana)]), $diasSemana);
-                        $diasRotados = array_merge(
-                            array_slice($diasSemana, $offset),
-                            array_slice($diasSemana, 0, $offset)
-                        );
-
-                        foreach ($diasRotados as $dia) {
-                            if ($horarioCreado) {
+                        $turnoSeleccionado = $turnosMap['mañana'];
+                        foreach ($turnosMap as $key => $t) {
+                            if (str_contains($disponibilidad, $key)) {
+                                $turnoSeleccionado = $t;
                                 break;
                             }
-                            foreach ($aulas as $aula) {
-                                try {
+                        }
+
+                        $grupoCompatible = $grupos->firstWhere('turno', $turnoSeleccionado['turno']);
+                        if (!$grupoCompatible) {
+                            $grupoCompatible = $grupos->first();
+                        }
+
+                        $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                        $asignacionesCreadas = 0;
+
+                        foreach ($materiasIds as $idx => $idMateria) {
+                            if ($asignacionesCreadas >= ($docente->maximo_grupos ?? 4)) {
+                                break;
+                            }
+
+                            try {
+                                $validationService->validarLimiteGruposDocente($docente->id, $gestionActiva->id);
+                            } catch (\Throwable $e) {
+                                break;
+                            }
+
+                            $asignacionId = DB::table('asignacion_academica')->insertGetId([
+                                'id_materia'      => $idMateria,
+                                'id_grupo'        => $grupoCompatible->id,
+                                'id_docente'      => $docente->id,
+                                'id_gestion_cup'  => $gestionActiva->id,
+                                'carga_horaria'   => 80,
+                                'estado'          => 'Activo',
+                            ]);
+
+                            $horarioCreado = false;
+                            $offset = array_search(($diasSemana[$idx % count($diasSemana)]), $diasSemana);
+                            $diasRotados = array_merge(
+                                array_slice($diasSemana, $offset),
+                                array_slice($diasSemana, 0, $offset)
+                            );
+
+                            foreach ($diasRotados as $dia) {
+                                if ($horarioCreado) {
+                                    break;
+                                }
+                                foreach ($aulas as $aula) {
+                                    try {
                                     $validationService->validarHorarioCompleto(
                                         $asignacionId,
                                         $aula->id,
@@ -233,37 +255,49 @@ class PostulacionDocenteRevisionController extends Controller
                                         $turnoSeleccionado['inicio'],
                                         $turnoSeleccionado['fin']
                                     );
-                                    DB::table('horario')->insert([
-                                        'id_asignacion_academica' => $asignacionId,
-                                        'id_aula'                 => $aula->id,
-                                        'dia_semana'              => $dia,
-                                        'horario_inicio'          => $turnoSeleccionado['inicio'],
-                                        'horario_fin'             => $turnoSeleccionado['fin'],
-                                    ]);
-                                    $horarioCreado = true;
-                                    break;
-                                } catch (HttpException $e) {
-                                    continue;
+                                    $validationService->validarCargaHoraria(
+                                        $asignacionId,
+                                        $turnoSeleccionado['inicio'],
+                                        $turnoSeleccionado['fin']
+                                    );
+                                        DB::table('horario')->insert([
+                                            'id_asignacion_academica' => $asignacionId,
+                                            'id_aula'                 => $aula->id,
+                                            'dia_semana'              => $dia,
+                                            'horario_inicio'          => $turnoSeleccionado['inicio'],
+                                            'horario_fin'             => $turnoSeleccionado['fin'],
+                                        ]);
+                                        $horarioCreado = true;
+                                        $ultimoDiaCreado = $dia;
+                                        break;
+                                    } catch (HttpException $e) {
+                                        continue;
+                                    }
                                 }
                             }
-                        }
 
-                        if ($horarioCreado) {
-                            $asignacionesCreadas++;
-                            Log::info("Horario creado para docente {$docente->id}, materia {$idMateria}, dia {$dia}");
-                        } else {
-                            DB::table('asignacion_academica')->where('id', $asignacionId)->delete();
-                            Log::warning("No se pudo asignar horario para materia {$idMateria} al docente {$docente->id}: todas las aulas ocupadas.");
+                            if ($horarioCreado) {
+                                $asignacionesCreadas++;
+                                Log::info("Horario creado para docente {$docente->id}, materia {$idMateria}, dia {$ultimoDiaCreado}");
+                            } else {
+                                DB::table('asignacion_academica')->where('id', $asignacionId)->delete();
+                                Log::warning("No se pudo asignar horario para materia {$idMateria} al docente {$docente->id}: todas las aulas ocupadas.");
+                            }
                         }
                     }
                 }
-            }
 
-            BitacoraService::registrar(
-                "Postulación docente aprobada - Usuario {$request->correo_acceso} creado para {$nombrePostulante}, perfil docente y materias asignadas",
-                session('usuario_id'),
-                'usuario'
-            );
+                BitacoraService::registrar(
+                    "Postulación docente aprobada - Usuario {$request->correo_acceso} creado para {$nombrePostulante}, perfil docente y materias asignadas",
+                    session('usuario_id'),
+                    'usuario'
+                );
+
+                DB::commit();
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                return back()->with('error', 'Error al aprobar la postulación: ' . $e->getMessage())->withInput();
+            }
         }
 
         $postulacion->update([
@@ -312,11 +346,9 @@ class PostulacionDocenteRevisionController extends Controller
                     <h1>Postulación Aprobada</h1>
                     <p>Hola, <strong>{$nombreCompleto}</strong>.</p>
                     <p>Tu postulación docente ha sido <strong>aprobada</strong>.</p>
-                    <p><strong>Tus credenciales de acceso son:</strong></p>
-                    <p><strong>Correo:</strong> " . e($request->correo_acceso) . "</p>
-                    <p><strong>Contraseña:</strong> " . e($request->password_acceso) . "</p>
+                    <p>Tu cuenta de acceso ha sido creada con el correo: <strong>" . e($request->correo_acceso) . "</strong></p>
+                    <p>La contraseña fue definida por el administrador. Si no la recuerdas, utiliza la opción <strong>\"Olvidé mi contraseña\"</strong> en la pantalla de inicio de sesión para restablecerla.</p>
                     <p><a href='" . url('/login') . "' style='display:inline-block;padding:12px 24px;background:#1E62A0;color:white;text-decoration:none;border-radius:8px;font-weight:bold;'>Ingresar a la plataforma</a></p>
-                    <p style='color:#888;font-size:13px;'>Recomendación: después de ingresar, cambia tu contraseña en la sección de perfil.</p>
                 ",
                 default => '',
             };

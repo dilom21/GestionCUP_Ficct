@@ -11,23 +11,20 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // Instanciamos Faker con nombres en Español
         $faker = Faker::create('es_ES');
-        $password = Hash::make('123'); // Contraseña encriptada estándar
+        $password = Hash::make('123');
 
         $this->command->info('Iniciando la población masiva para la FICCT...');
 
-        // 🔥 1. POBLAR CATÁLOGOS BÁSICOS
         DB::table('rol')->insertOrIgnore([
             ['id_rol' => 1, 'nombre' => 'Administrador'],
+            ['id_rol' => 2, 'nombre' => 'Administrativo'],
+            ['id_rol' => 3, 'nombre' => 'Director de Carrera'],
+            ['id_rol' => 4, 'nombre' => 'Docente'],
             ['id_rol' => 5, 'nombre' => 'Postulante'],
         ]);
 
-        // Llamar al seeder de módulos, funciones y permisos de roles
         $this->call(RolFuncionSeeder::class);
-
-        // Asignar materias, asignaciones y horarios a docentes existentes
-        $this->call(DocenteAsignacionSeeder::class);
 
         DB::table('gestion_cup')->insertOrIgnore([
             ['id_gestion_cup' => 1, 'nombre_gestion' => '1-2023'],
@@ -35,32 +32,88 @@ class DatabaseSeeder extends Seeder
             ['id_gestion_cup' => 3, 'nombre_gestion' => '1-2024'],
         ]);
 
-        // Aseguramos que existan 4 carreras para el random
-        for($c=1; $c<=4; $c++) {
-            DB::table('carrera')->insertOrIgnore(['id_carrera' => $c, 'nombre' => "Carrera $c"]);
+        for ($c = 1; $c <= 4; $c++) {
+            DB::table('carrera')->insertOrIgnore([
+                'id_carrera' => $c,
+                'nombre' => "Carrera $c",
+                'sigla' => "CAR$c",
+            ]);
         }
 
-        // 🔥 2. EL BUCLE MAESTRO (3 Gestiones x 100 Estudiantes)
-        $gestiones = [1, 2, 3]; // IDs de las gestiones 1-2023, 2-2023, 1-2024
+        // Crear docentes ANTES de DocenteAsignacionSeeder
+        $this->command->info('Creando docentes de prueba...');
+        $docenteIds = [];
+        for ($d = 1; $d <= 3; $d++) {
+            $idDocUsuario = DB::table('usuario')->insertGetId([
+                'nombre' => $faker->firstName,
+                'apellidos' => $faker->lastName . ' ' . $faker->lastName,
+                'correo' => $faker->unique()->safeEmail,
+                'password' => $password,
+                'id_rol' => 4,
+                'estado' => 'Activo',
+                'telefono' => $faker->phoneNumber,
+                'intentos_fallidos' => 0,
+                'bloqueado_hasta' => null,
+            ]);
+            $idDocente = DB::table('docente')->insertGetId([
+                'id_usuario' => $idDocUsuario,
+                'ci' => $faker->unique()->numerify('########'),
+                'profesion' => 'Ingeniero',
+                'grado_academico' => 'Licenciatura',
+                'experiencia_anios' => $faker->numberBetween(2, 15),
+                'maximo_grupos' => 4,
+            ]);
+            $docenteIds[] = $idDocente;
+        }
+
+        // Ahora DocenteAsignacionSeeder encuentra docentes
+        $this->call(DocenteAsignacionSeeder::class);
+
+        // Crear grupos base
+        $turnos = ['Mañana', 'Tarde', 'Noche'];
+        $gestionActiva = DB::table('gestion_cup')->first();
+        if ($gestionActiva) {
+            foreach ($turnos as $t) {
+                DB::table('grupo')->insertOrIgnore([
+                    'sigla' => substr($t, 0, 1) . 'A',
+                    'id_gestion_cup' => $gestionActiva->id_gestion_cup,
+                    'turno' => $t,
+                    'cupo_maximo' => 80,
+                    'modalidad' => 'Presencial',
+                    'estado' => 'Activo',
+                ]);
+            }
+        }
+
+        $gestiones = [1, 2, 3];
 
         foreach ($gestiones as $id_gestion) {
             $this->command->info("Poblando 100 alumnos para la Gestión ID: $id_gestion ...");
 
             for ($i = 0; $i < 100; $i++) {
-                
-                // A) Crear USUARIO
+                $nombre = $faker->firstName;
+                $apellidos = $faker->lastName . ' ' . $faker->lastName;
+                $correo = $faker->unique()->safeEmail;
+                $telefono = $faker->phoneNumber;
+
                 $id_usuario = DB::table('usuario')->insertGetId([
-                    'nombre' => $faker->firstName,
-                    'apellidos' => $faker->lastName . ' ' . $faker->lastName,
-                    'correo' => $faker->unique()->safeEmail,
+                    'nombre' => $nombre,
+                    'apellidos' => $apellidos,
+                    'correo' => $correo,
                     'password' => $password,
-                    'id_rol' => 5, // Rol Postulante
+                    'id_rol' => 5,
                     'estado' => 'Activo',
+                    'telefono' => $telefono,
+                    'intentos_fallidos' => 0,
+                    'bloqueado_hasta' => null,
                 ]);
 
-                // B) Crear POSTULANTE
                 $id_postulante = DB::table('postulante')->insertGetId([
                     'id_usuario' => $id_usuario,
+                    'nombre' => $nombre,
+                    'apellidos' => $apellidos,
+                    'correo' => $correo,
+                    'telefono' => $telefono,
                     'ci' => $faker->unique()->numerify('########'),
                     'fecha_nacimiento' => $faker->dateTimeBetween('2003-01-01', '2006-12-31')->format('Y-m-d'),
                     'sexo' => $faker->randomElement(['M', 'F']),
@@ -70,31 +123,36 @@ class DatabaseSeeder extends Seeder
                     'estado_postulante' => 'Habilitado',
                 ]);
 
-                // C) Crear POSTULACION (Eligiendo 2 carreras al azar)
+                $turno = $faker->randomElement(['Mañana', 'Tarde', 'Noche']);
                 $id_postulacion = DB::table('postulacion')->insertGetId([
                     'id_postulante' => $id_postulante,
                     'id_carrera_opcion_1' => $faker->numberBetween(1, 2),
                     'id_carrera_opcion_2' => $faker->numberBetween(3, 4),
                     'nro_formulario' => 'F-' . $id_gestion . '-' . $faker->unique()->numerify('####'),
+                    'estado_postulacion' => 'Aprobado',
+                    'turno' => $turno,
+                    'fecha_postulacion' => $faker->dateTimeBetween('2023-01-01', '2024-12-31'),
                 ]);
 
-                // D) Crear PAGO (Simulando Stripe)
                 DB::table('pago')->insert([
                     'id_postulacion' => $id_postulacion,
-                    'monto' => 300.00,
-                    'referencia' => $faker->randomElement(['Stripe', 'PayPal']),
+                    'monto' => 350.00,
+                    'referencia' => 'Stripe',
                     'estado_pago' => 'Confirmado',
                     'cod_transaccion' => 'TX-' . $faker->regexify('[A-Z0-9]{8}'),
                 ]);
 
-                // E) Crear INSCRIPCION_CUP
+                $grupos = DB::table('grupo')->where('turno', $turno)->get();
+                $idGrupo = $grupos->isNotEmpty() ? $grupos->random()->id : 1;
+
                 $id_inscripcion = DB::table('inscripcion_cup')->insertGetId([
                     'id_postulacion' => $id_postulacion,
-                    'id_grupo' => $faker->numberBetween(1, 6), // Asumiendo que tienes 6 grupos creados
+                    'id_grupo' => $idGrupo,
                     'id_gestion_cup' => $id_gestion,
+                    'fecha_inscripcion' => now(),
+                    'estado' => 'Inscrito',
                 ]);
 
-                // F) Crear NOTAS (Asumiendo 12 evaluaciones en total)
                 $notas = [];
                 for ($eval = 1; $eval <= 12; $eval++) {
                     $notas[] = [
@@ -107,6 +165,6 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        $this->command->info('¡Población masiva completada con éxito! 🚀');
+        $this->command->info('Población masiva completada exitosamente.');
     }
 }

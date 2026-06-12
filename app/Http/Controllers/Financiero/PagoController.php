@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Bitacora;
 use App\Models\Pago;
 use App\Models\Postulacion;
-use App\Models\Usuario;
+use App\Models\User as Usuario;
 use App\Services\BitacoraService;
 use App\Services\ResendEmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Stripe\Checkout\Session;
 use Stripe\Stripe;
 
@@ -229,7 +230,7 @@ class PagoController extends Controller
 
                 $postulante = $postulacion->postulante;
 
-                $password = substr(bin2hex(random_bytes(4)), 0, 8);
+                $password = Str::random(12);
 
                 $usuario = Usuario::create([
                     'nombre'    => $postulante->nombre,

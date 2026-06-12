@@ -17,6 +17,14 @@ use Inertia\Inertia;
 
 class PostulacionPostulanteRevisionController extends Controller
 {
+    public function verificarPermiso(string $permiso): void
+    {
+        $permisos = session('usuario_permisos', []);
+        if (!in_array($permiso, $permisos, true)) {
+            abort(403, 'No tienes permisos para realizar esta acción.');
+        }
+    }
+
     public function index(Request $request)
     {
         $query = Postulacion::with(['postulante', 'carrera1', 'carrera2', 'revisor'])
@@ -33,7 +41,7 @@ class PostulacionPostulanteRevisionController extends Controller
             });
         }
 
-        $postulaciones = $query->get();
+        $postulaciones = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/PostulacionesPostulantes/Index', [
             'postulaciones' => $postulaciones,
@@ -62,6 +70,7 @@ class PostulacionPostulanteRevisionController extends Controller
 
     public function guardarRevision(Request $request, $id)
     {
+        $this->verificarPermiso('postulaciones_postulantes.escribir');
         $postulacion = Postulacion::findOrFail($id);
 
         $request->validate([
@@ -96,7 +105,8 @@ class PostulacionPostulanteRevisionController extends Controller
 
     public function cambiarEstado(Request $request, $id)
     {
-        $postulacion = Postulacion::findOrFail($id);
+        $this->verificarPermiso('postulaciones_postulantes.escribir');
+        $postulacion = Postulacion::with('postulante')->findOrFail($id);
 
         $request->validate([
             'estado_postulacion' => 'required|in:Observado,Rechazado,Pago,Aprobado',
@@ -104,6 +114,17 @@ class PostulacionPostulanteRevisionController extends Controller
         ]);
 
         $nuevoEstado = $request->estado_postulacion;
+        $estadoActual = $postulacion->estado_postulacion;
+
+        // Validar transiciones de estado
+        $estadosFinales = ['Aprobado'];
+        if (in_array($estadoActual, $estadosFinales)) {
+            return back()->with('error', "La postulación ya está {$estadoActual}. No se puede cambiar el estado.")->withInput();
+        }
+        if ($nuevoEstado === 'Aprobado' && $estadoActual !== 'Pago') {
+            return back()->with('error', 'Solo se puede aprobar una postulación que esté en estado "Pago".')->withInput();
+        }
+
         $nombrePostulante = $postulacion->postulante ? 
             ($postulacion->postulante->nombre . ' ' . $postulacion->postulante->apellidos) : 
             'Postulante #' . $postulacion->id_postulante;
@@ -204,7 +225,7 @@ class PostulacionPostulanteRevisionController extends Controller
                     <p><strong>Motivo:</strong> " . e($request->observacion_general ?? 'Sin especificar') . "</p>
                 ",
                 'Pago' => "
-                    <h1>Postulación Aprobada — Pendiente de Pago</h1>
+                    <h1>Postulación Verificada — Pendiente de Pago</h1>
                     <p>Hola, <strong>{$nombrePostulante}</strong>.</p>
                     <p>Tus documentos han sido <strong>verificados correctamente</strong>.</p>
                     <p>Para completar tu inscripción al <strong>Curso Preuniversitario FICCT</strong>, debes realizar el pago correspondiente.</p>
@@ -216,7 +237,17 @@ class PostulacionPostulanteRevisionController extends Controller
                 'Aprobado' => "
                     <h1>Postulación Aprobada</h1>
                     <p>Hola, <strong>{$nombrePostulante}</strong>.</p>
-                    <p>Tu postulación ha sido <strong>aprobada</strong>.</p>
+                    <p>Tu postulación ha sido <strong>aprobada</strong> y tu inscripción al <strong>Curso Preuniversitario FICCT</strong> está completa.</p>
+                    <p>Tu grupo asignado es el <strong>" . e($postulacion->inscripcion?->grupo?->sigla ?? 'pendiente de asignación') . "</strong>.</p>
+                    <p>Próximos pasos:</p>
+                    <ul>
+                        <li>Revisa tu horario de clases en el sistema.</li>
+                        <li>Asiste puntualmente a tus clases.</li>
+                        <li>Ante cualquier duda, contacta a la administración.</li>
+                    </ul>
+                    <p style='text-align:center;margin:30px 0;'>
+                        <a href='" . url('/login') . "' style='display:inline-block;padding:12px 24px;background:#1E62A0;color:white;text-decoration:none;border-radius:8px;font-weight:bold;'>Ingresar a la plataforma</a>
+                    </p>
                 ",
                 default => '',
             };

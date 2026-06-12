@@ -12,7 +12,7 @@ export function PermisosProvider({ children, permisos }) {
         };
 
         const puedeEditar = (modulo) => {
-            return tienePermiso(modulo, 'EDITAR');
+            return tienePermiso(modulo, 'ESCRIBIR');
         };
 
         const esSoloLectura = (modulo) => {

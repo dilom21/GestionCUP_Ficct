@@ -11,8 +11,16 @@ class Pago extends Model
 
     protected $table = 'pago';
     protected $primaryKey = 'id';
-    protected $guarded = [];
     public $timestamps = false;
+
+    protected $fillable = [
+        'id_postulacion',
+        'monto',
+        'fecha_pago',
+        'referencia',
+        'estado_pago',
+        'cod_transaccion',
+    ];
 
     public function postulacion()
     {
