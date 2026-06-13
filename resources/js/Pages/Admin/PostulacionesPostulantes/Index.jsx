@@ -39,7 +39,7 @@ export default function PostulacionesPostulantesIndex({ postulaciones, filtros }
                 </form>
 
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    {postulaciones.length === 0 ? (
+                    {postulaciones.data.length === 0 ? (
                         <div className="p-16 text-center text-slate-500">
                             <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7" /></svg>
@@ -61,7 +61,7 @@ export default function PostulacionesPostulantesIndex({ postulaciones, filtros }
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {postulaciones.map((p) => (
+                                    {postulaciones.data.map((p) => (
                                         <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">

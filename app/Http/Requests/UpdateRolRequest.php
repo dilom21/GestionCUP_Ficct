@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Rol;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,10 +15,11 @@ class UpdateRolRequest extends FormRequest
 
     public function rules(): array
     {
-        $rolId = $this->route('rol');
+        $rol = $this->route('rol');
+        $rolId = $rol instanceof Rol ? $rol->getKey() : $rol;
 
         return [
-            'nombre'      => ['required', 'string', 'max:100', Rule::unique('rol', 'nombre')->ignore($rolId, 'id_rol')],
+            'nombre'      => ['required', 'string', 'max:100', Rule::unique('rol', 'nombre')->ignore($rolId, 'id')],
             'descripcion' => 'nullable|string|max:255',
             'funciones'   => 'nullable|array',
             'funciones.*' => 'integer|exists:funcion,id',

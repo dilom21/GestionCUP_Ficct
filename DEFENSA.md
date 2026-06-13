@@ -60,3 +60,6 @@ Cuando generes código o lógica, asegúrate de que cumpla perfectamente con est
 * **Lógica Defensiva:** Escribe código priorizando validaciones en el backend (Controladores de Laravel) antes de procesar transacciones en la base de datos para evitar quiebres de restricciones fatales.
 * **Clean Code:** Mantén los controladores limpios, delegando validaciones pesadas de cruces de horarios a servicios dedicados (`App\Services\AcademicValidationService`) o métodos privados testeables.
 * **Respuestas en JSON:** Los controladores de API deben responder siempre con códigos de estado HTTP correctos (`200 OK`, `201 Created`, `422 Unprocessable Entity`, `400 Bad Request`) junto con mensajes claros y descriptivos en español.
+
+
+

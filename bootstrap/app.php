@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'auth.sesion' => \App\Http\Middleware\AuthSesion::class,
+            'permiso' => \App\Http\Middleware\VerificarPermiso::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

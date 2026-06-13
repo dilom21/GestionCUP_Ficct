@@ -1,6 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState, useEffect, useMemo } from 'react';
-import { tienePermiso, sincronizarPermisos } from '@/Helpers/Permisos';
 import sidebarModules from '@/Data/sidebarConfig';
 
 /**
@@ -93,6 +92,11 @@ const iconMap = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
     </svg>
   ),
+  evaluaciones: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  ),
   gestion_postulantes: (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -138,6 +142,11 @@ const iconMap = {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
     </svg>
   ),
+  asignacion_carrera: (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  ),
   gestion_docentes: (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -174,11 +183,10 @@ export default function SidebarAdmin() {
     const usuarioRol = props?.auth?.usuario_rol_nombre;
     const esAdmin = usuarioRol === 'Administrador';
 
-    useEffect(() => {
-        if (usuarioPermisos) {
-            sincronizarPermisos(usuarioPermisos);
-        }
-    }, [usuarioPermisos]);
+    const tienePermisoActual = (permiso) => {
+        if (!permiso) return true;
+        return Array.isArray(usuarioPermisos) && usuarioPermisos.includes(permiso);
+    };
 
     const toggleMenu = (label) => {
         const next = expandedMenu === label ? null : label;
@@ -214,6 +222,11 @@ export default function SidebarAdmin() {
                               child.entidad === 'bitacora' ? route('admin.bitacora') :
                               child.entidad === 'gestion_docentes' ? route('admin.docentes.index') :
                               child.entidad === 'gestion_postulantes' ? route('admin.postulantes.gestion') :
+                              child.entidad === 'evaluaciones' ? route('admin.evaluaciones.index') :
+                              child.entidad === 'resultados_cup' ? route('admin.resultados-cup.index') :
+                              child.entidad === 'cupos_carrera' ? route('admin.cupos-carrera.index') :
+                              child.entidad === 'asignacion_carrera' ? route('admin.asignacion-carrera.index') :
+                              child.entidad === 'resultados_admision' ? route('admin.resultados-admision.index') :
                               child.entidad === 'docentes_materias' ? route('docentes.materias.index') :
                               child.entidad === 'aulas' ? route('aulas.index') :
                               child.entidad === 'grupos' ? route('grupos.index') :
@@ -239,11 +252,11 @@ export default function SidebarAdmin() {
         if (esAdmin) return true;
         if (item.isDropdown) {
             return item.children.some((child) => {
-                if (child.permiso) return tienePermiso(child.permiso);
+                if (child.permiso) return tienePermisoActual(child.permiso);
                 return true;
             });
         }
-        if (item.permisoLeer) return tienePermiso(item.permisoLeer);
+        if (item.permisoLeer) return tienePermisoActual(item.permisoLeer);
         return true;
     });
 
@@ -288,7 +301,7 @@ export default function SidebarAdmin() {
                                         {item.children
                                             .filter((child) => {
                                                 if (esAdmin) return true;
-                                                if (child.permiso) return tienePermiso(child.permiso);
+                                                if (child.permiso) return tienePermisoActual(child.permiso);
                                                 return true;
                                             })
                                             .map((child, childIdx) => (
@@ -325,22 +338,6 @@ export default function SidebarAdmin() {
             </div>
             <div className="px-4 py-4">
                 <div className="mx-1 mb-4 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
-                <button
-                    onClick={toggleSidebarLock}
-                    className={`rounded-xl mx-1 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-blue-500/10 hover:text-blue-400 w-full ${sidebarLocked ? 'text-blue-400' : ''}`}
-                >
-                    <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {sidebarLocked ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        )}
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span className={`transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                        Fijar sidebar
-                    </span>
-                </button>
                 <Link
                     href={route('logout')}
                     method="post"

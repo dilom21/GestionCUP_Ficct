@@ -3,6 +3,11 @@
 use App\Http\Controllers\Admin\AulaController;
 use App\Http\Controllers\Admin\BitacoraController;
 use App\Http\Controllers\Admin\DocenteController;
+use App\Http\Controllers\Admin\EvaluacionController;
+use App\Http\Controllers\Admin\AsignacionCarreraController;
+use App\Http\Controllers\Admin\ResultadoAdmisionController;
+use App\Http\Controllers\Admin\CupoCarreraController;
+use App\Http\Controllers\Admin\ResultadoCupController;
 use App\Http\Controllers\Admin\GrupoController;
 use App\Http\Controllers\Admin\HorarioController;
 use App\Http\Controllers\Admin\AsignacionAcademicaController;
@@ -82,29 +87,54 @@ Route::post('/stripe/webhook', [PagoController::class, 'handleWebhook'])->name('
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth.sesion')->group(function () {
-    Route::get('/admin/bitacora', [BitacoraController::class, 'index'])->name('admin.bitacora');
+    Route::get('/admin/bitacora', [BitacoraController::class, 'index'])->middleware('permiso:bitacora.leer')->name('admin.bitacora');
 
     // Docentes - gestión de perfiles
-    Route::get('/admin/docentes', [DocenteController::class, 'index'])->name('admin.docentes.index');
-    Route::post('/admin/docentes', [DocenteController::class, 'store'])->name('admin.docentes.store');
-    Route::match(['put', 'patch'], '/admin/docentes/{id}', [DocenteController::class, 'update'])->name('admin.docentes.update');
-    Route::post('/admin/docentes/{id}/cambiar-estado', [DocenteController::class, 'cambiarEstado'])->name('admin.docentes.cambiar-estado');
+    Route::get('/admin/docentes', [DocenteController::class, 'index'])->middleware('permiso:gestion_docentes.leer')->name('admin.docentes.index');
+    Route::post('/admin/docentes', [DocenteController::class, 'store'])->middleware('permiso:gestion_docentes.escribir')->name('admin.docentes.store');
+    Route::match(['put', 'patch'], '/admin/docentes/{id}', [DocenteController::class, 'update'])->middleware('permiso:gestion_docentes.escribir')->name('admin.docentes.update');
+    Route::post('/admin/docentes/{id}/cambiar-estado', [DocenteController::class, 'cambiarEstado'])->middleware('permiso:gestion_docentes.escribir')->name('admin.docentes.cambiar-estado');
 
     // Postulantes - gestión de perfiles (solo los que completaron el proceso)
-    Route::get('/admin/postulantes-gestion', [PostulanteGestionController::class, 'index'])->name('admin.postulantes.gestion');
-    Route::match(['put', 'patch'], '/admin/postulantes-gestion/{id}', [PostulanteGestionController::class, 'update'])->name('admin.postulantes.gestion.update');
-    Route::post('/admin/postulantes-gestion/{id}/cambiar-estado', [PostulanteGestionController::class, 'cambiarEstado'])->name('admin.postulantes.gestion.cambiar-estado');
+    Route::get('/admin/postulantes-gestion', [PostulanteGestionController::class, 'index'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulantes.gestion');
+    Route::match(['put', 'patch'], '/admin/postulantes-gestion/{id}', [PostulanteGestionController::class, 'update'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulantes.gestion.update');
+    Route::post('/admin/postulantes-gestion/{id}/cambiar-estado', [PostulanteGestionController::class, 'cambiarEstado'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulantes.gestion.cambiar-estado');
+
+    // Evaluaciones
+    Route::get('/admin/evaluaciones', [EvaluacionController::class, 'index'])->middleware('permiso:evaluaciones.leer')->name('admin.evaluaciones.index');
+    Route::post('/admin/evaluaciones', [EvaluacionController::class, 'store'])->middleware('permiso:evaluaciones.escribir')->name('admin.evaluaciones.store');
+    Route::match(['put', 'patch'], '/admin/evaluaciones/{id}', [EvaluacionController::class, 'update'])->middleware('permiso:evaluaciones.escribir')->name('admin.evaluaciones.update');
+    Route::post('/admin/evaluaciones/{id}/cambiar-estado', [EvaluacionController::class, 'cambiarEstado'])->middleware('permiso:evaluaciones.escribir')->name('admin.evaluaciones.cambiar-estado');
+
+    // Resultados CUP
+    Route::get('/admin/resultados-cup', [ResultadoCupController::class, 'index'])->middleware('permiso:resultados_cup.leer')->name('admin.resultados-cup.index');
+    Route::post('/admin/resultados-cup/{id}/calcular', [ResultadoCupController::class, 'calcular'])->middleware('permiso:resultados_cup.escribir')->name('admin.resultados-cup.calcular');
+    Route::post('/admin/resultados-cup/calcular-todos', [ResultadoCupController::class, 'calcularTodos'])->middleware('permiso:resultados_cup.escribir')->name('admin.resultados-cup.calcular-todos');
+
+    // Cupos por Carrera
+    Route::get('/admin/cupos-carrera', [CupoCarreraController::class, 'index'])->middleware('permiso:cupos_carrera.leer')->name('admin.cupos-carrera.index');
+    Route::post('/admin/cupos-carrera', [CupoCarreraController::class, 'store'])->middleware('permiso:cupos_carrera.escribir')->name('admin.cupos-carrera.store');
+    Route::match(['put', 'patch'], '/admin/cupos-carrera/{idGestion}/{idCarrera}', [CupoCarreraController::class, 'update'])->middleware('permiso:cupos_carrera.escribir')->name('admin.cupos-carrera.update');
+    Route::post('/admin/cupos-carrera/{idGestion}/{idCarrera}/cambiar-estado', [CupoCarreraController::class, 'cambiarEstado'])->middleware('permiso:cupos_carrera.escribir')->name('admin.cupos-carrera.cambiar-estado');
+
+    // Asignación de Estudiantes a Carrera
+    Route::get('/admin/asignacion-carrera', [AsignacionCarreraController::class, 'index'])->middleware('permiso:asignacion_carrera.leer')->name('admin.asignacion-carrera.index');
+    Route::post('/admin/asignacion-carrera/ejecutar', [AsignacionCarreraController::class, 'ejecutarAsignacion'])->middleware('permiso:asignacion_carrera.escribir')->name('admin.asignacion-carrera.ejecutar');
+    Route::post('/admin/asignacion-carrera/{idResultado}/asignar', [AsignacionCarreraController::class, 'asignarIndividual'])->middleware('permiso:asignacion_carrera.escribir')->name('admin.asignacion-carrera.asignar');
+
+    // Resultados de Admisión
+    Route::get('/admin/resultados-admision', [ResultadoAdmisionController::class, 'index'])->middleware('permiso:resultados_admision.leer')->name('admin.resultados-admision.index');
 
     // Postulaciones docentes - revisión administrativa
-    Route::get('/admin/postulaciones-docentes', [PostulacionDocenteRevisionController::class, 'index'])->name('admin.postulaciones.docentes');
-    Route::get('/admin/postulaciones-docentes/{id}', [PostulacionDocenteRevisionController::class, 'show'])->name('admin.postulaciones.docentes.show');
-    Route::post('/admin/postulaciones-docentes/{id}/guardar-revision', [PostulacionDocenteRevisionController::class, 'guardarRevision'])->name('admin.postulaciones.docentes.guardar-revision');
-    Route::post('/admin/postulaciones-docentes/{id}/cambiar-estado', [PostulacionDocenteRevisionController::class, 'cambiarEstado'])->name('admin.postulaciones.docentes.cambiar-estado');
+    Route::get('/admin/postulaciones-docentes', [PostulacionDocenteRevisionController::class, 'index'])->middleware('permiso:postulaciones_docentes.leer')->name('admin.postulaciones.docentes');
+    Route::get('/admin/postulaciones-docentes/{id}', [PostulacionDocenteRevisionController::class, 'show'])->middleware('permiso:postulaciones_docentes.leer')->name('admin.postulaciones.docentes.show');
+    Route::post('/admin/postulaciones-docentes/{id}/guardar-revision', [PostulacionDocenteRevisionController::class, 'guardarRevision'])->middleware('permiso:postulaciones_docentes.escribir')->name('admin.postulaciones.docentes.guardar-revision');
+    Route::post('/admin/postulaciones-docentes/{id}/cambiar-estado', [PostulacionDocenteRevisionController::class, 'cambiarEstado'])->middleware('permiso:postulaciones_docentes.escribir')->name('admin.postulaciones.docentes.cambiar-estado');
 
-    Route::get('/admin/postulaciones-postulantes', [PostulacionPostulanteRevisionController::class, 'index'])->name('admin.postulaciones.postulantes');
-    Route::get('/admin/postulaciones-postulantes/{id}', [PostulacionPostulanteRevisionController::class, 'show'])->name('admin.postulaciones.postulantes.show');
-    Route::post('/admin/postulaciones-postulantes/{id}/guardar-revision', [PostulacionPostulanteRevisionController::class, 'guardarRevision'])->name('admin.postulaciones.postulantes.guardar-revision');
-    Route::post('/admin/postulaciones-postulantes/{id}/cambiar-estado', [PostulacionPostulanteRevisionController::class, 'cambiarEstado'])->name('admin.postulaciones.postulantes.cambiar-estado');
+    Route::get('/admin/postulaciones-postulantes', [PostulacionPostulanteRevisionController::class, 'index'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulaciones.postulantes');
+    Route::get('/admin/postulaciones-postulantes/{id}', [PostulacionPostulanteRevisionController::class, 'show'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulaciones.postulantes.show');
+    Route::post('/admin/postulaciones-postulantes/{id}/guardar-revision', [PostulacionPostulanteRevisionController::class, 'guardarRevision'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulaciones.postulantes.guardar-revision');
+    Route::post('/admin/postulaciones-postulantes/{id}/cambiar-estado', [PostulacionPostulanteRevisionController::class, 'cambiarEstado'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulaciones.postulantes.cambiar-estado');
 
     Route::get('/admin/postulaciones-postulantes/documentos/{documento}/descargar', function (Request $request, DocumentoPostulacionPostulante $documento) {
         try {
@@ -118,7 +148,7 @@ Route::middleware('auth.sesion')->group(function () {
             'Content-Type' => $documento->mime_type ?: 'application/octet-stream',
             'Content-Disposition' => 'inline; filename="'.$nombre.'"',
         ]);
-    })->name('admin.postulaciones.postulantes.descargar');
+    })->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulaciones.postulantes.descargar');
 
     Route::get('/admin/postulaciones-docentes/documentos/{documento}/descargar', function (Request $request, DocumentoPostulacionDocente $documento) {
         try {
@@ -134,7 +164,7 @@ Route::middleware('auth.sesion')->group(function () {
             'Content-Length' => strlen($archivo->body()),
             'Content-Disposition' => $disposition.'; filename="'.$nombre.'"',
         ]);
-    })->name('admin.postulaciones.docentes.descargar');
+    })->middleware('permiso:postulaciones_docentes.leer')->name('admin.postulaciones.docentes.descargar');
 
     Route::get('/panel', function () {
         return Inertia::render('Panel/Dashboard');
@@ -145,80 +175,80 @@ Route::middleware('auth.sesion')->group(function () {
     | CU13: Gestión de Aulas
     |--------------------------------------------------------------------------
     */
-    Route::get('/aulas', [AulaController::class, 'index'])->name('aulas.index');
-    Route::post('/aulas', [AulaController::class, 'store'])->name('aulas.store');
-    Route::put('/aulas/{aula}', [AulaController::class, 'update'])->name('aulas.update');
-    Route::delete('/aulas/{aula}', [AulaController::class, 'destroy'])->name('aulas.destroy');
+    Route::get('/aulas', [AulaController::class, 'index'])->middleware('permiso:aulas.leer')->name('aulas.index');
+    Route::post('/aulas', [AulaController::class, 'store'])->middleware('permiso:aulas.escribir')->name('aulas.store');
+    Route::put('/aulas/{aula}', [AulaController::class, 'update'])->middleware('permiso:aulas.escribir')->name('aulas.update');
+    Route::delete('/aulas/{aula}', [AulaController::class, 'destroy'])->middleware('permiso:aulas.escribir')->name('aulas.destroy');
 
     /*
     |--------------------------------------------------------------------------
     | CU11: Gestión de Grupos
     |--------------------------------------------------------------------------
     */
-    Route::get('/grupos', [GrupoController::class, 'index'])->name('grupos.index');
-    Route::post('/grupos', [GrupoController::class, 'store'])->name('grupos.store');
-    Route::put('/grupos/{grupo}', [GrupoController::class, 'update'])->name('grupos.update');
-    Route::delete('/grupos/{grupo}', [GrupoController::class, 'destroy'])->name('grupos.destroy');
-    Route::post('/grupos/generar', [GrupoController::class, 'generar'])->name('grupos.generar');
+    Route::get('/grupos', [GrupoController::class, 'index'])->middleware('permiso:grupos.leer')->name('grupos.index');
+    Route::post('/grupos', [GrupoController::class, 'store'])->middleware('permiso:grupos.escribir')->name('grupos.store');
+    Route::put('/grupos/{grupo}', [GrupoController::class, 'update'])->middleware('permiso:grupos.escribir')->name('grupos.update');
+    Route::delete('/grupos/{grupo}', [GrupoController::class, 'destroy'])->middleware('permiso:grupos.escribir')->name('grupos.destroy');
+    Route::post('/grupos/generar', [GrupoController::class, 'generar'])->middleware('permiso:grupos.escribir')->name('grupos.generar');
 
     /*
     |--------------------------------------------------------------------------
     | Gestión de Asignación Académica
     |--------------------------------------------------------------------------
     */
-    Route::get('/asignaciones-academicas', [AsignacionAcademicaController::class, 'index'])->name('asignaciones.index');
-    Route::post('/asignaciones-academicas', [AsignacionAcademicaController::class, 'store'])->name('asignaciones.store');
-    Route::get('/docentes-materias', [DocenteMateriaController::class, 'index'])->name('docentes.materias.index');
-    Route::post('/docentes-materias', [DocenteMateriaController::class, 'store'])->name('docentes.materias.store');
-    Route::delete('/docentes-materias/{idDocente}/{idMateria}', [DocenteMateriaController::class, 'destroy'])->name('docentes.materias.destroy');
-    Route::put('/asignaciones-academicas/{asignacionAcademica}', [AsignacionAcademicaController::class, 'update'])->name('asignaciones.update');
-    Route::delete('/asignaciones-academicas/{asignacionAcademica}', [AsignacionAcademicaController::class, 'destroy'])->name('asignaciones.destroy');
+    Route::get('/asignaciones-academicas', [AsignacionAcademicaController::class, 'index'])->middleware('permiso:asignacion_academica.leer')->name('asignaciones.index');
+    Route::post('/asignaciones-academicas', [AsignacionAcademicaController::class, 'store'])->middleware('permiso:asignacion_academica.escribir')->name('asignaciones.store');
+    Route::get('/docentes-materias', [DocenteMateriaController::class, 'index'])->middleware('permiso:docentes_materias.leer')->name('docentes.materias.index');
+    Route::post('/docentes-materias', [DocenteMateriaController::class, 'store'])->middleware('permiso:docentes_materias.escribir')->name('docentes.materias.store');
+    Route::delete('/docentes-materias/{idDocente}/{idMateria}', [DocenteMateriaController::class, 'destroy'])->middleware('permiso:docentes_materias.escribir')->name('docentes.materias.destroy');
+    Route::put('/asignaciones-academicas/{asignacionAcademica}', [AsignacionAcademicaController::class, 'update'])->middleware('permiso:asignacion_academica.escribir')->name('asignaciones.update');
+    Route::delete('/asignaciones-academicas/{asignacionAcademica}', [AsignacionAcademicaController::class, 'destroy'])->middleware('permiso:asignacion_academica.escribir')->name('asignaciones.destroy');
 
     /*
     |--------------------------------------------------------------------------
     | Gestión de Horarios
     |--------------------------------------------------------------------------
     */
-    Route::get('/horarios', [HorarioController::class, 'index'])->name('horarios.index');
-    Route::post('/horarios', [HorarioController::class, 'store'])->name('horarios.store');
-    Route::put('/horarios/{horario}', [HorarioController::class, 'update'])->name('horarios.update');
-    Route::delete('/horarios/{horario}', [HorarioController::class, 'destroy'])->name('horarios.destroy');
+    Route::get('/horarios', [HorarioController::class, 'index'])->middleware('permiso:horarios.leer')->name('horarios.index');
+    Route::post('/horarios', [HorarioController::class, 'store'])->middleware('permiso:horarios.escribir')->name('horarios.store');
+    Route::put('/horarios/{horario}', [HorarioController::class, 'update'])->middleware('permiso:horarios.escribir')->name('horarios.update');
+    Route::delete('/horarios/{horario}', [HorarioController::class, 'destroy'])->middleware('permiso:horarios.escribir')->name('horarios.destroy');
 
     /*
     |--------------------------------------------------------------------------
     | CU02: Gestión de Usuarios y Roles
     |--------------------------------------------------------------------------
     */
-    Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
-    Route::post('/roles', [RolController::class, 'store'])->name('roles.store');
-    Route::put('/roles/{rol}', [RolController::class, 'update'])->name('roles.update');
-    Route::delete('/roles/{rol}', [RolController::class, 'destroy'])->name('roles.destroy');
-    Route::get('/roles/{rol}/funciones', [RolController::class, 'getFunciones'])->name('roles.funciones');
+    Route::get('/roles', [RolController::class, 'index'])->middleware('permiso:roles.leer')->name('roles.index');
+    Route::post('/roles', [RolController::class, 'store'])->middleware('permiso:roles.escribir')->name('roles.store');
+    Route::put('/roles/{rol}', [RolController::class, 'update'])->middleware('permiso:roles.escribir')->name('roles.update');
+    Route::delete('/roles/{rol}', [RolController::class, 'destroy'])->middleware('permiso:roles.escribir')->name('roles.destroy');
+    Route::get('/roles/{rol}/funciones', [RolController::class, 'getFunciones'])->middleware('permiso:roles.leer')->name('roles.funciones');
 
-    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
-    Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
-    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
-    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+    Route::get('/usuarios', [UsuarioController::class, 'index'])->middleware('permiso:usuarios.leer')->name('usuarios.index');
+    Route::post('/usuarios', [UsuarioController::class, 'store'])->middleware('permiso:usuarios.escribir')->name('usuarios.store');
+    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->middleware('permiso:usuarios.escribir')->name('usuarios.update');
+    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->middleware('permiso:usuarios.escribir')->name('usuarios.destroy');
 
     /*
     |--------------------------------------------------------------------------
     | CU04: Gestión de Carreras
     |--------------------------------------------------------------------------
     */
-    Route::get('/carreras', [CarreraController::class, 'index'])->name('carreras.index');
-    Route::post('/carreras', [CarreraController::class, 'store'])->name('carreras.store');
-    Route::put('/carreras/{carrera}', [CarreraController::class, 'update'])->name('carreras.update');
-    Route::delete('/carreras/{carrera}', [CarreraController::class, 'destroy'])->name('carreras.destroy');
+    Route::get('/carreras', [CarreraController::class, 'index'])->middleware('permiso:carreras.leer')->name('carreras.index');
+    Route::post('/carreras', [CarreraController::class, 'store'])->middleware('permiso:carreras.escribir')->name('carreras.store');
+    Route::put('/carreras/{carrera}', [CarreraController::class, 'update'])->middleware('permiso:carreras.escribir')->name('carreras.update');
+    Route::delete('/carreras/{carrera}', [CarreraController::class, 'destroy'])->middleware('permiso:carreras.escribir')->name('carreras.destroy');
 
     /*
     |--------------------------------------------------------------------------
     | CU06: Gestión de Materias
     |--------------------------------------------------------------------------
     */
-    Route::get('/materias', [MateriaController::class, 'index'])->name('materias.index');
-    Route::post('/materias', [MateriaController::class, 'store'])->name('materias.store');
-    Route::put('/materias/{materium}', [MateriaController::class, 'update'])->name('materias.update');
-    Route::delete('/materias/{materium}', [MateriaController::class, 'destroy'])->name('materias.destroy');
+    Route::get('/materias', [MateriaController::class, 'index'])->middleware('permiso:materias.leer')->name('materias.index');
+    Route::post('/materias', [MateriaController::class, 'store'])->middleware('permiso:materias.escribir')->name('materias.store');
+    Route::put('/materias/{materium}', [MateriaController::class, 'update'])->middleware('permiso:materias.escribir')->name('materias.update');
+    Route::delete('/materias/{materium}', [MateriaController::class, 'destroy'])->middleware('permiso:materias.escribir')->name('materias.destroy');
 
     /*
     |--------------------------------------------------------------------------
@@ -226,7 +256,7 @@ Route::middleware('auth.sesion')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('financiero')->group(function () {
-        Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
+        Route::get('/pagos', [PagoController::class, 'index'])->middleware('permiso:pagos_listado.leer')->name('pagos.index');
     });
 
     /*
@@ -255,7 +285,7 @@ Route::middleware('auth.sesion')->group(function () {
     | Admin: Asistencia y Control (visor con filtros)
     |--------------------------------------------------------------------------
     */
-    Route::get('/admin/asistencia', [\App\Http\Controllers\Admin\AsistenciaController::class, 'index'])->name('admin.asistencia.index');
+    Route::get('/admin/asistencia', [\App\Http\Controllers\Admin\AsistenciaController::class, 'index'])->middleware('permiso:asistencia_docente.leer,asistencia_estudiantes.leer')->name('admin.asistencia.index');
 });
 
 Route::post('/financiero/pago/crear-sesion', [PagoController::class, 'createCheckoutSession'])->name('pago.crear-sesion');

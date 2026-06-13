@@ -3,7 +3,7 @@ import { useState } from 'react';
 import PermisosModuloAccordion from './PermisosModuloAccordion';
 
 /**
- * Modal para crear o editar un rol con asignación de permisos por módulo.
+ * Modal para crear o editar un rol con asignación granular de permisos por función.
  */
 export default function RolModal({
     showModal,
@@ -26,6 +26,7 @@ export default function RolModal({
     getOpcionLabel,
     getOpcionColor,
     handleOpcionEntidad,
+    toggleEntidad,
     getModuloEstado,
     contarPermisos,
     toggleModuloCompleto,
@@ -259,9 +260,10 @@ export default function RolModal({
                                                             entidades={entidades}
                                                             getOpcionEntidad={getOpcionEntidad}
                                                             getOpcionLabel={getOpcionLabel}
-                                                            getOpcionColor={getOpcionColor}
-                                                            handleOpcionEntidad={handleOpcionEntidad}
-                                                            getModuloEstado={getModuloEstado}
+                                            getOpcionColor={getOpcionColor}
+                                            handleOpcionEntidad={handleOpcionEntidad}
+                                            toggleEntidad={toggleEntidad}
+                                            getModuloEstado={getModuloEstado}
                                                             contarPermisos={contarPermisos}
                                                             toggleModuloCompleto={toggleModuloCompleto}
                                                         />

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState } from 'react';
 
@@ -133,7 +133,7 @@ export default function BitacoraIndex({ registros, usuarios, filtros }) {
 
                 {/* Tabla */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    {registros.data.length === 0 ? (
+                    {registros.length === 0 ? (
                         <div className="p-16 text-center text-slate-500">
                             <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +157,7 @@ export default function BitacoraIndex({ registros, usuarios, filtros }) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {registros.data.map((item) => (
+                                    {registros.map((item) => (
                                         <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap text-slate-400 font-mono text-xs">#{item.id}</td>
                                             <td className="px-6 py-4">
@@ -191,30 +191,6 @@ export default function BitacoraIndex({ registros, usuarios, filtros }) {
                         </div>
                     )}
 
-                    {/* Paginación */}
-                    {registros.links && registros.links.length > 3 && (
-                        <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-                            <p className="text-xs text-slate-500">
-                                Mostrando {registros.from}-{registros.to} de {registros.total} registros
-                            </p>
-                            <div className="flex gap-1">
-                                {registros.links.map((link, idx) => (
-                                    <Link
-                                        key={idx}
-                                        href={link.url || '#'}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                                            link.active
-                                                ? 'bg-blue-600 text-white'
-                                                : link.url
-                                                    ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                    : 'bg-slate-50 text-slate-300 cursor-not-allowed'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </AdminLayout>

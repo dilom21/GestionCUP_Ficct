@@ -50,6 +50,7 @@ export default function RolesIndex({ roles, modulos }) {
         getOpcionLabel,
         getOpcionColor,
         handleOpcionEntidad,
+        toggleEntidad,
         getModuloEstado,
         contarPermisos,
         toggleModuloCompleto,
@@ -99,6 +100,7 @@ export default function RolesIndex({ roles, modulos }) {
                         getOpcionLabel={getOpcionLabel}
                         getOpcionColor={getOpcionColor}
                         handleOpcionEntidad={handleOpcionEntidad}
+                        toggleEntidad={toggleEntidad}
                         getModuloEstado={getModuloEstado}
                         contarPermisos={contarPermisos}
                         toggleModuloCompleto={toggleModuloCompleto}

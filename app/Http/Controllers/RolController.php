@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Rol;
 use App\Models\Modulo;
 use App\Models\Bitacora;
+use App\Models\Funcion;
 use App\Http\Requests\StoreRolRequest;
 use App\Http\Requests\UpdateRolRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -32,12 +34,13 @@ class RolController extends Controller
      */
     public function store(StoreRolRequest $request)
     {
-        $rol = Rol::create($request->validated());
+        $validated = $request->validated();
+        $funciones = $validated['funciones'] ?? [];
+        unset($validated['funciones']);
 
-        // Asignar funciones seleccionadas al rol
-        if ($request->has('funciones') && is_array($request->funciones)) {
-            $rol->funciones()->sync($request->funciones);
-        }
+        $rol = Rol::create($validated);
+        $rol->funciones()->sync($funciones);
+        Cache::forget("rol:{$rol->id}:sesion");
 
         // Registrar en bitácora
         Bitacora::create([
@@ -56,13 +59,16 @@ class RolController extends Controller
      */
     public function update(UpdateRolRequest $request, Rol $rol)
     {
-        $rol->update($request->validated());
+        $validated = $request->validated();
+        $funciones = $validated['funciones'] ?? [];
+        unset($validated['funciones']);
 
-        // Sincronizar funciones seleccionadas al rol
-        if ($request->has('funciones') && is_array($request->funciones)) {
-            $rol->funciones()->sync($request->funciones);
-        } else {
-            $rol->funciones()->sync([]);
+        $rol->update($validated);
+        $rol->funciones()->sync($funciones);
+        Cache::forget("rol:{$rol->id}:sesion");
+
+        if ((int) session('usuario_rol_id') === (int) $rol->id) {
+            session(['usuario_permisos' => $rol->getPermisosArray()]);
         }
 
         // Registrar en bitácora
@@ -107,8 +113,16 @@ class RolController extends Controller
      */
     public function getFunciones(Rol $rol)
     {
+        $permisos = Rol::expandirPermisosLegacy(
+            $rol->funciones()->pluck('funcion.permiso')->toArray()
+        );
+        $permisosModernos = array_filter(
+            $permisos,
+            fn (string $permiso) => str_contains($permiso, '.')
+        );
+
         return response()->json([
-            'funciones' => $rol->funciones->pluck('id'),
+            'funciones' => Funcion::whereIn('permiso', $permisosModernos)->pluck('id'),
         ]);
     }
 }

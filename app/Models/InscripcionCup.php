@@ -36,4 +36,9 @@ class InscripcionCup extends Model
     {
         return $this->hasMany(AsignacionAcademica::class, 'id_grupo', 'id_grupo');
     }
+
+    public function resultado()
+    {
+        return $this->hasOne(ResultadoCup::class, 'id_inscripcion_cup');
+    }
 }

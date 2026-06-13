@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Rol;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -29,6 +30,10 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $permisos = Rol::expandirPermisosLegacy(
+            $request->session()->get('usuario_permisos', [])
+        );
+
         return [
             ...parent::share($request),
             'flash' => [
@@ -43,7 +48,7 @@ class HandleInertiaRequests extends Middleware
                 'usuario_correo'     => $request->session()->get('usuario_correo'),
                 'usuario_rol_id'     => $request->session()->get('usuario_rol_id'),
                 'usuario_rol_nombre' => $request->session()->get('usuario_rol_nombre'),
-                'usuario_permisos'   => $request->session()->get('usuario_permisos', []),
+                'usuario_permisos'   => $permisos,
             ],
         ];
     }

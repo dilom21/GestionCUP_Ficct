@@ -86,8 +86,18 @@ class RolFuncionSeeder extends Seeder
             ['nombre' => 'Ver Materias y Notas',     'permiso' => 'materias_notas.leer',         'modulo' => 'Materias y Notas'],
             ['nombre' => 'Ver Materias',             'permiso' => 'materias.leer',               'modulo' => 'Materias y Notas'],
             ['nombre' => 'Gestionar Materias',       'permiso' => 'materias.escribir',           'modulo' => 'Materias y Notas'],
+            ['nombre' => 'Ver Evaluaciones',         'permiso' => 'evaluaciones.leer',           'modulo' => 'Materias y Notas'],
+            ['nombre' => 'Gestionar Evaluaciones',   'permiso' => 'evaluaciones.escribir',       'modulo' => 'Materias y Notas'],
+            ['nombre' => 'Ver Resultados CUP',       'permiso' => 'resultados_cup.leer',         'modulo' => 'Materias y Notas'],
+            ['nombre' => 'Gestionar Resultados CUP', 'permiso' => 'resultados_cup.escribir',     'modulo' => 'Materias y Notas'],
             // Módulo: Cupos y Admisión
             ['nombre' => 'Ver Cupos y Admisión',     'permiso' => 'cupos_admision.leer',         'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Ver Cupos por Carrera',    'permiso' => 'cupos_carrera.leer',          'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Gestionar Cupos por Carrera','permiso' => 'cupos_carrera.escribir',    'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Ver Asignación a Carrera', 'permiso' => 'asignacion_carrera.leer',     'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Gestionar Asignación a Carrera','permiso' => 'asignacion_carrera.escribir', 'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Ver Resultados Admisión',  'permiso' => 'resultados_admision.leer',    'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Gestionar Resultados Admisión','permiso' => 'resultados_admision.escribir', 'modulo' => 'Cupos y Admisión'],
             // Módulo: Asistencia y Control
             ['nombre' => 'Ver Módulo Asistencia',     'permiso' => 'asistencia.leer',             'modulo' => 'Asistencia y Control'],
             ['nombre' => 'Ver Asistencia Docente',    'permiso' => 'asistencia_docente.leer',     'modulo' => 'Asistencia y Control'],

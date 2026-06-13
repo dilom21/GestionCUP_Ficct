@@ -14,6 +14,7 @@ export default function PermisosModuloAccordion({
     getOpcionLabel,
     getOpcionColor,
     handleOpcionEntidad,
+    toggleEntidad,
     getModuloEstado,
     contarPermisos,
     toggleModuloCompleto,
@@ -157,6 +158,24 @@ export default function PermisosModuloAccordion({
                                             {/* Entidad Header */}
                                             <div className="flex items-center justify-between px-4 py-3">
                                                 <div className="flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        role="checkbox"
+                                                        aria-checked={Boolean(opcionActual)}
+                                                        aria-label={`${opcionActual ? 'Desactivar' : 'Activar'} ${info.nombre}`}
+                                                        onClick={() => toggleEntidad(entidad)}
+                                                        className={`w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
+                                                            opcionActual
+                                                                ? 'bg-indigo-600 border-indigo-600 shadow-sm shadow-indigo-200'
+                                                                : 'bg-white border-slate-300 hover:border-indigo-400'
+                                                        }`}
+                                                    >
+                                                        {opcionActual && (
+                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
                                                     <span className="text-xl">{info.icono}</span>
                                                     <div>
                                                         <span className={`text-sm font-bold ${colores.text || 'text-slate-700'}`}>

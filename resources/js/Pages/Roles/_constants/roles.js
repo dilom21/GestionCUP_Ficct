@@ -37,6 +37,12 @@ export const ENTIDAD_INFO = {
     horarios:                   { nombre: 'Horarios',                 icono: '🕐',    color: 'cyan' },
     gestion_docentes:           { nombre: 'Gestión de Docentes',      icono: '👨‍🏫',   color: 'orange' },
     docentes_materias:          { nombre: 'Materias por Docente',     icono: '📚',    color: 'orange' },
+    gestion_postulantes:        { nombre: 'Gestión de Postulantes',   icono: '👨‍🎓',   color: 'emerald' },
+    evaluaciones:               { nombre: 'Evaluaciones',             icono: '📝',    color: 'violet' },
+    resultados_cup:             { nombre: 'Resultados CUP',           icono: '📊',    color: 'indigo' },
+    cupos_carrera:              { nombre: 'Gestión de Cupos por Carrera', icono: '🏆', color: 'teal' },
+    asignacion_carrera:         { nombre: 'Asignar Estudiantes a Carrera', icono: '🎯', color: 'amber' },
+    resultados_admision:        { nombre: 'Resultados de Admisión',   icono: '📋',    color: 'indigo' },
     asistencia_docente:         { nombre: 'Asistencia Docente',       icono: '👨‍🏫',   color: 'green' },
     asistencia_estudiantes:     { nombre: 'Asistencia Estudiantes',   icono: '👤',    color: 'green' },
 };

@@ -30,7 +30,7 @@ class BitacoraController extends Controller
             $query->where('fecha_hora', '<=', $request->fecha_hasta . ' 23:59:59');
         }
 
-        $registros = $query->paginate(20)->withQueryString();
+        $registros = $query->get();
 
         // Obtener usuarios para el filtro de empleados
         $usuarios = \App\Models\User::select('id', 'nombre', 'apellidos')

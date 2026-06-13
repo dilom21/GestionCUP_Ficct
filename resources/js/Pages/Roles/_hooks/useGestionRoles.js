@@ -5,24 +5,30 @@ import sidebarModules from '@/Data/sidebarConfig';
 
 /**
  * Obtiene los items (botones) definidos en el sidebar para un módulo dado.
- * @param {string} moduloLabel - El label del módulo (ej: 'Usuarios y Seguridad')
- * @returns {Array} Lista de items con { entidad, label, icon, color, permiso }
- * 
- * NOTA: Solo se retornan items que estén definidos en `children[]` del módulo.
- * Si el módulo no tiene hijos, retorna [] (el módulo aparecerá vacío en permisos).
  */
 function getSidebarItemsForModulo(moduloLabel) {
     const mod = sidebarModules.find((m) => m.label === moduloLabel);
     if (!mod) return [];
 
-    // Solo retornar items de children[] — si está vacío, retorna []
-    return (mod.children || []).map((child) => ({
+    const items = (mod.children || []).map((child) => ({
         entidad: child.entidad,
         label: child.label,
         icon: child.icon || '📌',
         color: child.color || 'slate',
         permisoLeer: child.permiso,
     }));
+
+    if (items.length === 0 && mod.permisoLeer) {
+        items.push({
+            entidad: mod.entidad,
+            label: mod.label,
+            icon: mod.icon || '📌',
+            color: mod.color || 'slate',
+            permisoLeer: mod.permisoLeer,
+        });
+    }
+
+    return items;
 }
 
 /**
@@ -46,7 +52,17 @@ export default function useGestionRoles({ roles: initialRoles, modulos: initialM
     const [roles, setRoles] = useState(initialRoles || []);
     const [modulos, setModulos] = useState(initialModulos || []);
 
-    const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
+    const {
+        data,
+        setData,
+        post,
+        put,
+        delete: destroy,
+        processing,
+        errors,
+        reset,
+        transform,
+    } = useForm({
         nombre: '',
         descripcion: '',
         funciones: [],
@@ -88,22 +104,17 @@ export default function useGestionRoles({ roles: initialRoles, modulos: initialM
     /**
      * Agrupa funciones de un módulo por los botones definidos en SidebarConfig.
      * Solo aparecen entidades que están definidas como hijos del módulo en la sidebar.
-     * Si no hay funciones para un módulo (porque no tiene botones en el sidebar),
-     * retorna un arreglo vacío.
      */
     const agruparPorEntidad = useMemo(() => {
         return (funciones) => {
             if (!funciones || funciones.length === 0) return [];
 
-            // Determinar el módulo al que pertenecen estas funciones
             const idModulo = funciones[0]?.id_modulo;
             const moduloAsociado = modulos.find((m) => m.id === idModulo);
             const moduloLabel = moduloAsociado?.nombre || '';
 
-            // Obtener los items del sidebar para este módulo
             const sidebarItems = getSidebarItemsForModulo(moduloLabel);
 
-            // Agrupar por entidad según los items del sidebar
             return sidebarItems
                 .map((item) => {
                     const { funciones: fns, lectura, escritura } = findFunctionsForEntidad(
@@ -183,6 +194,14 @@ export default function useGestionRoles({ roles: initialRoles, modulos: initialM
             setData('funciones', updated);
         };
     }, [selectedFunciones, setData]);
+
+    /** Activa o desactiva una funcionalidad completa desde su checkbox. */
+    const toggleEntidad = useMemo(() => {
+        return (entidad) => {
+            const estaSeleccionada = Boolean(getOpcionEntidad(entidad));
+            handleOpcionEntidad(entidad, estaSeleccionada ? null : 'lectura_escritura');
+        };
+    }, [getOpcionEntidad, handleOpcionEntidad]);
 
     /** Determina el estado del check del módulo */
     const getModuloEstado = useMemo(() => {
@@ -270,7 +289,14 @@ export default function useGestionRoles({ roles: initialRoles, modulos: initialM
         try {
             const response = await fetch(route('roles.funciones', rol.id));
             const result = await response.json();
-            const funcionesIds = result.funciones || [];
+            const funcionesSeleccionables = new Set(
+                modulos.flatMap((modulo) =>
+                    agruparPorEntidad(modulo.funciones)
+                        .flatMap((entidad) => entidad.funciones.map((funcion) => funcion.id))
+                )
+            );
+            const funcionesIds = (result.funciones || [])
+                .filter((id) => funcionesSeleccionables.has(id));
             setSelectedFunciones(funcionesIds);
             setData('funciones', funcionesIds);
         } catch (error) {
@@ -309,33 +335,28 @@ export default function useGestionRoles({ roles: initialRoles, modulos: initialM
         e.preventDefault();
         setAnimatingFunciones(true);
 
-        setTimeout(() => {
-            if (editingRol) {
-                put(route('roles.update', editingRol.id), {
-                    data: { ...data, funciones: selectedFunciones },
-                    onSuccess: () => {
-                        setAnimatingFunciones(false);
-                        closeModal();
-                    },
-                    onError: (err) => {
-                        setAnimatingFunciones(false);
-                        console.error(err);
-                    },
-                });
-            } else {
-                post(route('roles.store'), {
-                    data: { ...data, funciones: selectedFunciones },
-                    onSuccess: () => {
-                        setAnimatingFunciones(false);
-                        closeModal();
-                    },
-                    onError: (err) => {
-                        setAnimatingFunciones(false);
-                        console.error(err);
-                    },
-                });
-            }
-        }, 300);
+        transform((formData) => ({
+            ...formData,
+            funciones: [...selectedFunciones],
+        }));
+
+        const options = {
+            onSuccess: () => {
+                setAnimatingFunciones(false);
+                closeModal();
+            },
+            onError: (err) => {
+                setAnimatingFunciones(false);
+                console.error(err);
+            },
+            onFinish: () => setAnimatingFunciones(false),
+        };
+
+        if (editingRol) {
+            put(route('roles.update', editingRol.id), options);
+        } else {
+            post(route('roles.store'), options);
+        }
     };
 
     const handleDelete = (rol) => {
@@ -414,6 +435,7 @@ export default function useGestionRoles({ roles: initialRoles, modulos: initialM
         getOpcionLabel,
         getOpcionColor,
         handleOpcionEntidad,
+        toggleEntidad,
         getModuloEstado,
         contarPermisos,
         toggleModuloCompleto,

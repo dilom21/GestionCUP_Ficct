@@ -8,6 +8,7 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
     const [documentosList, setDocumentosList] = useState([]);
     const [dragActive, setDragActive] = useState(false);
     const [postulacionId, setPostulacionId] = useState(null);
+    const [erroresPasoUno, setErroresPasoUno] = useState({});
     const inputRef = useRef(null);
     const dropRef = useRef(null);
 
@@ -64,6 +65,69 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
     const handleDrag = (e) => { e.preventDefault(); e.stopPropagation(); if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true); else if (e.type === 'dragleave') setDragActive(false); };
     const handleDrop = (e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files.length > 0) agregarArchivos(e.dataTransfer.files); };
     const handleFileSelect = (e) => { if (e.target.files && e.target.files.length > 0) agregarArchivos(e.target.files); };
+
+    const validarPasoUno = () => {
+        const nuevosErrores = {};
+        const camposObligatorios = {
+            nombre: 'El nombre es obligatorio.',
+            apellidos: 'Los apellidos son obligatorios.',
+            correo: 'El correo electrónico es obligatorio.',
+            telefono: 'El teléfono es obligatorio.',
+            ci: 'El CI es obligatorio.',
+            fecha_nacimiento: 'La fecha de nacimiento es obligatoria.',
+            sexo: 'El sexo es obligatorio.',
+            ciudad: 'La ciudad es obligatoria.',
+            turno: 'El turno es obligatorio.',
+            direccion: 'La dirección es obligatoria.',
+            colegio_procedencia: 'El colegio de procedencia es obligatorio.',
+            id_carrera_opcion_1: 'La carrera opción 1 es obligatoria.',
+            id_carrera_opcion_2: 'La carrera opción 2 es obligatoria.',
+        };
+
+        Object.entries(camposObligatorios).forEach(([campo, mensaje]) => {
+            if (!String(data[campo] ?? '').trim()) nuevosErrores[campo] = mensaje;
+        });
+
+        if (data.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.correo)) {
+            nuevosErrores.correo = 'Ingrese un correo electrónico válido.';
+        }
+
+        if (
+            data.id_carrera_opcion_1 &&
+            data.id_carrera_opcion_2 &&
+            String(data.id_carrera_opcion_1) === String(data.id_carrera_opcion_2)
+        ) {
+            nuevosErrores.id_carrera_opcion_2 = 'Las dos carreras seleccionadas deben ser diferentes.';
+        }
+
+        setErroresPasoUno(nuevosErrores);
+        return Object.keys(nuevosErrores).length === 0;
+    };
+
+    const avanzarARequisitos = () => {
+        if (validarPasoUno()) {
+            setPaso(1);
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            document.querySelector('[data-error-paso-uno]')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        });
+    };
+
+    const seleccionarCarreraUno = (valor) => {
+        setData((actual) => ({
+            ...actual,
+            id_carrera_opcion_1: valor,
+            id_carrera_opcion_2:
+                String(actual.id_carrera_opcion_2) === String(valor)
+                    ? ''
+                    : actual.id_carrera_opcion_2,
+        }));
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -227,6 +291,14 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
                             {paso === 0 && (
                                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-5">
                                     <h2 className="text-lg font-bold text-slate-800">Datos del postulante</h2>
+                                    {Object.keys(erroresPasoUno).length > 0 && (
+                                        <div
+                                            data-error-paso-uno
+                                            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                                        >
+                                            Completa correctamente todos los campos antes de continuar.
+                                        </div>
+                                    )}
                                     <div className="grid sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre *</label>
@@ -247,9 +319,10 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
                                             {errors.correo && <p className="mt-1 text-xs text-red-500">{errors.correo}</p>}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Teléfono</label>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Teléfono *</label>
                                             <input type="text" value={data.telefono} onChange={(e) => setData('telefono', e.target.value)}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20" />
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${erroresPasoUno.telefono ? 'border-red-300' : 'border-slate-200'}`} />
+                                            {erroresPasoUno.telefono && <p className="mt-1 text-xs text-red-500">{erroresPasoUno.telefono}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">CI *</label>
@@ -291,36 +364,38 @@ export default function PreinscripcionCreate({ carreras, requisitos, paymentData
                                             {errors.turno && <p className="mt-1 text-xs text-red-500">{errors.turno}</p>}
                                         </div>
                                         <div className="sm:col-span-2">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Dirección</label>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Dirección *</label>
                                             <input type="text" value={data.direccion} onChange={(e) => setData('direccion', e.target.value)}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20" />
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${erroresPasoUno.direccion ? 'border-red-300' : 'border-slate-200'}`} />
+                                            {erroresPasoUno.direccion && <p className="mt-1 text-xs text-red-500">{erroresPasoUno.direccion}</p>}
                                         </div>
                                         <div className="sm:col-span-2">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Colegio de procedencia</label>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Colegio de procedencia *</label>
                                             <input type="text" value={data.colegio_procedencia} onChange={(e) => setData('colegio_procedencia', e.target.value)}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20" />
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${erroresPasoUno.colegio_procedencia ? 'border-red-300' : 'border-slate-200'}`} />
+                                            {erroresPasoUno.colegio_procedencia && <p className="mt-1 text-xs text-red-500">{erroresPasoUno.colegio_procedencia}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Carrera opción 1 *</label>
-                                            <select value={data.id_carrera_opcion_1} onChange={(e) => setData('id_carrera_opcion_1', e.target.value)}
-                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${errors.id_carrera_opcion_1 ? 'border-red-300' : 'border-slate-200 focus:border-blue-600'}`}>
+                                            <select value={data.id_carrera_opcion_1} onChange={(e) => seleccionarCarreraUno(e.target.value)}
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${(errors.id_carrera_opcion_1 || erroresPasoUno.id_carrera_opcion_1) ? 'border-red-300' : 'border-slate-200 focus:border-blue-600'}`}>
                                                 <option value="">Seleccionar...</option>
-                                                {carreras.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.sigla})</option>)}
+                                                {carreras.map((c) => <option key={c.id} value={c.id} disabled={String(c.id) === String(data.id_carrera_opcion_2)}>{c.nombre} ({c.sigla})</option>)}
                                             </select>
-                                            {errors.id_carrera_opcion_1 && <p className="mt-1 text-xs text-red-500">{errors.id_carrera_opcion_1}</p>}
+                                            {(errors.id_carrera_opcion_1 || erroresPasoUno.id_carrera_opcion_1) && <p className="mt-1 text-xs text-red-500">{errors.id_carrera_opcion_1 || erroresPasoUno.id_carrera_opcion_1}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Carrera opción 2 *</label>
                                             <select value={data.id_carrera_opcion_2} onChange={(e) => setData('id_carrera_opcion_2', e.target.value)}
-                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${errors.id_carrera_opcion_2 ? 'border-red-300' : 'border-slate-200 focus:border-blue-600'}`}>
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20 ${(errors.id_carrera_opcion_2 || erroresPasoUno.id_carrera_opcion_2) ? 'border-red-300' : 'border-slate-200 focus:border-blue-600'}`}>
                                                 <option value="">Seleccionar...</option>
-                                                {carreras.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.sigla})</option>)}
+                                                {carreras.map((c) => <option key={c.id} value={c.id} disabled={String(c.id) === String(data.id_carrera_opcion_1)}>{c.nombre} ({c.sigla})</option>)}
                                             </select>
-                                            {errors.id_carrera_opcion_2 && <p className="mt-1 text-xs text-red-500">{errors.id_carrera_opcion_2}</p>}
+                                            {(errors.id_carrera_opcion_2 || erroresPasoUno.id_carrera_opcion_2) && <p className="mt-1 text-xs text-red-500">{errors.id_carrera_opcion_2 || erroresPasoUno.id_carrera_opcion_2}</p>}
                                         </div>
                                     </div>
                                     <div className="flex justify-end pt-4">
-                                        <button type="button" onClick={() => setPaso(1)}
+                                        <button type="button" onClick={avanzarARequisitos}
                                             className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all">Siguiente</button>
                                     </div>
                                 </div>
