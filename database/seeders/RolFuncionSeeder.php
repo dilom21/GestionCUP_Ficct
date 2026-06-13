@@ -98,6 +98,8 @@ class RolFuncionSeeder extends Seeder
             ['nombre' => 'Gestionar Asignación a Carrera','permiso' => 'asignacion_carrera.escribir', 'modulo' => 'Cupos y Admisión'],
             ['nombre' => 'Ver Resultados Admisión',  'permiso' => 'resultados_admision.leer',    'modulo' => 'Cupos y Admisión'],
             ['nombre' => 'Gestionar Resultados Admisión','permiso' => 'resultados_admision.escribir', 'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Ver Carreras',             'permiso' => 'carreras.leer',               'modulo' => 'Cupos y Admisión'],
+            ['nombre' => 'Gestionar Carreras',       'permiso' => 'carreras.escribir',           'modulo' => 'Cupos y Admisión'],
             // Módulo: Asistencia y Control
             ['nombre' => 'Ver Módulo Asistencia',     'permiso' => 'asistencia.leer',             'modulo' => 'Asistencia y Control'],
             ['nombre' => 'Ver Asistencia Docente',    'permiso' => 'asistencia_docente.leer',     'modulo' => 'Asistencia y Control'],
@@ -106,13 +108,12 @@ class RolFuncionSeeder extends Seeder
             ['nombre' => 'Gestionar Asistencia Estudiantes','permiso' => 'asistencia_estudiantes.escribir','modulo' => 'Asistencia y Control'],
             // Módulo: Reportes
             ['nombre' => 'Ver Reportes',             'permiso' => 'reportes.leer',               'modulo' => 'Reportes'],
+            ['nombre' => 'Exportar Reportes',        'permiso' => 'reportes.escribir',            'modulo' => 'Reportes'],
             // Módulo: Usuarios y Seguridad
             ['nombre' => 'Ver Usuarios',             'permiso' => 'usuarios.leer',               'modulo' => 'Usuarios y Seguridad'],
             ['nombre' => 'Gestionar Usuarios',       'permiso' => 'usuarios.escribir',           'modulo' => 'Usuarios y Seguridad'],
             ['nombre' => 'Ver Roles',                'permiso' => 'roles.leer',                  'modulo' => 'Usuarios y Seguridad'],
             ['nombre' => 'Gestionar Roles',          'permiso' => 'roles.escribir',              'modulo' => 'Usuarios y Seguridad'],
-            ['nombre' => 'Ver Carreras',             'permiso' => 'carreras.leer',               'modulo' => 'Usuarios y Seguridad'],
-            ['nombre' => 'Gestionar Carreras',       'permiso' => 'carreras.escribir',           'modulo' => 'Usuarios y Seguridad'],
             ['nombre' => 'Ver Bitácora',             'permiso' => 'bitacora.leer',               'modulo' => 'Usuarios y Seguridad'],
             ['nombre' => 'Gestionar Bitácora',       'permiso' => 'bitacora.escribir',           'modulo' => 'Usuarios y Seguridad'],
         ];

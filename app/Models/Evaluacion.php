@@ -37,4 +37,9 @@ class Evaluacion extends Model
     {
         return $this->belongsTo(GestionCup::class, 'id_gestion_cup');
     }
+
+    public function notas()
+    {
+        return $this->hasMany(Nota::class, 'id_evaluacion');
+    }
 }

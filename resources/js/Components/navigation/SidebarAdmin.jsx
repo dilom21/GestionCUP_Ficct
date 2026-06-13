@@ -1,10 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import sidebarModules from '@/Data/sidebarConfig';
 
-/**
- * Mapa de iconos SVG por entidad para usar en la sidebar.
- */
 const iconMap = {
   dashboard: (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,6 +124,16 @@ const iconMap = {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   ),
+  explorador_cup: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  sala_situacion: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+    </svg>
+  ),
   asistencia: (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -159,18 +166,22 @@ function getIconForModule(entidad) {
   return iconMap[entidad] || null;
 }
 
-export default function SidebarAdmin() {
+export default function SidebarAdmin({ sidebarOpen, onClose }) {
     const { url, props } = usePage();
     const [expandedMenu, setExpandedMenu] = useState(() => {
-        try {
-            return sessionStorage.getItem('sidebar_expanded_menu') || null;
-        } catch { return null; }
+        try { return sessionStorage.getItem('sidebar_expanded_menu') || null; } catch { return null; }
     });
     const [sidebarLocked, setSidebarLocked] = useState(() => {
-        try {
-            return sessionStorage.getItem('sidebar_locked') === 'true';
-        } catch { return false; }
+        try { return sessionStorage.getItem('sidebar_locked') === 'true'; } catch { return false; }
     });
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 1024);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
 
     const isActive = (href) => {
         if (!href || href === '#') return false;
@@ -219,6 +230,8 @@ export default function SidebarAdmin() {
                               child.entidad === 'pagos_listado' ? route('pagos.index') :
                               child.entidad === 'postulaciones_docentes' ? route('admin.postulaciones.docentes') :
                               child.entidad === 'postulaciones_postulantes' ? route('admin.postulaciones.postulantes') :
+                              child.entidad === 'postulaciones_kanban' ? route('admin.postulaciones.kanban') :
+                              child.entidad === 'trayectorias' ? route('admin.trayectorias.index') :
                               child.entidad === 'bitacora' ? route('admin.bitacora') :
                               child.entidad === 'gestion_docentes' ? route('admin.docentes.index') :
                               child.entidad === 'gestion_postulantes' ? route('admin.postulantes.gestion') :
@@ -234,6 +247,7 @@ export default function SidebarAdmin() {
                               child.entidad === 'horarios' ? route('horarios.index') :
                               child.entidad === 'asistencia_docente' ? route('admin.asistencia.index', { tab: 'docente' }) :
                               child.entidad === 'asistencia_estudiantes' ? route('admin.asistencia.index', { tab: 'estudiante' }) :
+                              child.entidad === 'reportes' ? route('admin.reportes.index') :
                               '#',
                     })),
                 };
@@ -242,12 +256,14 @@ export default function SidebarAdmin() {
                 label: mod.label,
                 permisoLeer: mod.permisoLeer,
                 icon: getIconForModule(mod.entidad),
-                href: mod.entidad === 'dashboard' ? route('panel.dashboard') : '#',
+                href: mod.entidad === 'dashboard' ? route('panel.dashboard') :
+                      mod.entidad === 'reportes' ? route('admin.reportes.index') :
+                      mod.entidad === 'explorador_cup' ? route('admin.explorador-cup.index') :
+                      mod.entidad === 'sala_situacion' ? route('admin.sala-situacion.index') : '#',
             };
         });
     }, []);
 
-    // Filtrar items del menú según permisos
     const visibleMenuItems = modulesConfig.filter((item) => {
         if (esAdmin) return true;
         if (item.isDropdown) {
@@ -260,19 +276,43 @@ export default function SidebarAdmin() {
         return true;
     });
 
-    return (
-        <aside className={`group bg-slate-900 border-r border-slate-800 text-slate-400 h-screen sticky top-0 flex flex-col justify-between transition-all duration-300 ease-in-out shadow-2xl z-50 overflow-y-auto overflow-x-hidden ${sidebarLocked ? 'w-72' : 'w-20 hover:w-72'}`}>
+    const sidebarContent = (
+        <div className={`flex flex-col h-full ${isMobile ? 'w-72' : ''}`}>
             <div>
+                {/* Header */}
                 <div className="px-4 py-6 flex items-center gap-4 min-h-[88px]">
-                    <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/20">
-                        A
-                    </div>
-                    <div className={`whitespace-nowrap transition-opacity duration-200 delay-100 ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/20">A</div>
+                    <div className="whitespace-nowrap opacity-100">
                         <p className="text-xs text-slate-400">Bienvenido,</p>
                         <p className="text-sm text-white font-bold capitalize">{usuarioRol || 'Usuario'}</p>
                     </div>
+                    {/* Cerrar en mobile */}
+                    {isMobile && (
+                        <button onClick={onClose} className="ml-auto p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
+
                 <div className="mx-3 mb-4 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
+
+                {/* Lock toggle en desktop */}
+                {!isMobile && (
+                    <div className="flex justify-end px-4 mb-2">
+                        <button
+                            onClick={toggleSidebarLock}
+                            className={`p-1.5 rounded-lg transition-all duration-200 ${sidebarLocked ? 'text-blue-400 bg-blue-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+                            title={sidebarLocked ? 'Desbloquear sidebar' : 'Bloquear sidebar abierta'}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarLocked ? 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z' : 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'} />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+
                 <nav className="space-y-1 px-2">
                     {visibleMenuItems.map((item, idx) =>
                         item.isDropdown ? (
@@ -286,11 +326,9 @@ export default function SidebarAdmin() {
                                     <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center transition-colors duration-200 group-hover/item:text-white">
                                         {item.icon}
                                     </span>
-                                    <span className={`flex-1 text-left transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        {item.label}
-                                    </span>
+                                    <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
                                     <svg
-                                        className={`w-4 h-4 transition-all duration-300 ${expandedMenu === item.label ? 'rotate-180' : ''} ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                        className={`w-4 h-4 transition-all duration-300 ${expandedMenu === item.label ? 'rotate-180' : ''}`}
                                         fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                     >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -308,6 +346,7 @@ export default function SidebarAdmin() {
                                                 <Link
                                                     key={childIdx}
                                                     href={child.href}
+                                                    onClick={() => isMobile && onClose?.()}
                                                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                                                         isActive(child.href) ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                                     }`}
@@ -323,34 +362,138 @@ export default function SidebarAdmin() {
                             <Link
                                 key={idx}
                                 href={item.href}
+                                onClick={() => isMobile && onClose?.()}
                                 className={`rounded-xl mx-1 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-blue-600 hover:text-white group/item ${isActive(item.href) ? 'bg-blue-600 text-white' : ''}`}
                             >
                                 <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center transition-colors duration-200 group-hover/item:text-white">
                                     {item.icon}
                                 </span>
-                                <span className={`transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    {item.label}
-                                </span>
+                                <span className="whitespace-nowrap">{item.label}</span>
                             </Link>
                         ),
                     )}
                 </nav>
             </div>
-            <div className="px-4 py-4">
+
+            <div className="px-4 py-4 mt-auto">
                 <div className="mx-1 mb-4 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
                 <Link
                     href={route('logout')}
                     method="post"
                     as="button"
+                    onClick={() => isMobile && onClose?.()}
                     className="rounded-xl mx-1 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-red-500/10 hover:text-red-400 w-full"
                 >
                     <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span className={`transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                        Cerrar sesión
-                    </span>
+                    <span className="whitespace-nowrap">Cerrar sesión</span>
                 </Link>
+            </div>
+        </div>
+    );
+
+    if (isMobile) {
+        return (
+            <>
+                {/* Backdrop */}
+                <div
+                    className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-all duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    onClick={onClose}
+                />
+                {/* Sidebar overlay */}
+                <aside
+                    className={`fixed top-0 left-0 z-50 h-screen bg-slate-900 border-r border-slate-800 text-slate-400 shadow-2xl overflow-y-auto transition-all duration-300 ease-in-out ${
+                        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
+                >
+                    {sidebarContent}
+                </aside>
+            </>
+        );
+    }
+
+    return (
+        <aside className={`group bg-slate-900 border-r border-slate-800 text-slate-400 h-screen sticky top-0 flex flex-col justify-between transition-all duration-300 ease-in-out shadow-2xl z-50 overflow-y-auto overflow-x-hidden ${sidebarLocked ? 'w-72' : 'w-20 hover:w-72'}`}>
+            {/* Desktop: collapsed by default, expand on hover */}
+            <div className="flex flex-col h-full">
+                <div className="px-4 py-6 flex items-center gap-4 min-h-[88px]">
+                    <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-blue-500/20">A</div>
+                    <div className={`whitespace-nowrap transition-opacity duration-200 delay-100 ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        <p className="text-xs text-slate-400">Bienvenido,</p>
+                        <p className="text-sm text-white font-bold capitalize">{usuarioRol || 'Usuario'}</p>
+                    </div>
+                </div>
+                <div className="mx-3 mb-4 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
+                <div className={`flex justify-end px-4 mb-2 ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    <button
+                        onClick={toggleSidebarLock}
+                        className={`p-1.5 rounded-lg transition-all duration-200 ${sidebarLocked ? 'text-blue-400 bg-blue-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+                        title={sidebarLocked ? 'Desbloquear sidebar' : 'Bloquear sidebar abierta'}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarLocked ? 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z' : 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'} />
+                        </svg>
+                    </button>
+                </div>
+                <nav className="space-y-1 px-2">
+                    {visibleMenuItems.map((item, idx) =>
+                        item.isDropdown ? (
+                            <div key={idx}>
+                                <button
+                                    onClick={() => toggleMenu(item.label)}
+                                    className={`w-full rounded-xl px-3 py-3 text-sm font-medium flex items-center gap-4 transition-all duration-200 hover:bg-blue-600 hover:text-white group/item ${
+                                        expandedMenu === item.label ? 'bg-blue-600/20 text-blue-400' : ''
+                                    }`}
+                                >
+                                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center transition-colors duration-200 group-hover/item:text-white">{item.icon}</span>
+                                    <span className={`flex-1 text-left transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>{item.label}</span>
+                                    <svg className={`w-4 h-4 transition-all duration-300 ${expandedMenu === item.label ? 'rotate-180' : ''} ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedMenu === item.label ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                                    <div className="ml-11 space-y-1 border-l-2 border-blue-500/30 pl-3">
+                                        {item.children
+                                            .filter((child) => {
+                                                if (esAdmin) return true;
+                                                if (child.permiso) return tienePermisoActual(child.permiso);
+                                                return true;
+                                            })
+                                            .map((child, childIdx) => (
+                                                <Link key={childIdx} href={child.href}
+                                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                                                        isActive(child.href) ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                                    }`}
+                                                >
+                                                    <span className="flex-shrink-0">{child.icon}</span>
+                                                    <span className="whitespace-nowrap">{child.label}</span>
+                                                </Link>
+                                            ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <Link key={idx} href={item.href}
+                                className={`rounded-xl mx-1 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-blue-600 hover:text-white group/item ${isActive(item.href) ? 'bg-blue-600 text-white' : ''}`}
+                            >
+                                <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center transition-colors duration-200 group-hover/item:text-white">{item.icon}</span>
+                                <span className={`transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>{item.label}</span>
+                            </Link>
+                        ),
+                    )}
+                </nav>
+                <div className="px-4 py-4 mt-auto">
+                    <div className="mx-1 mb-4 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
+                    <Link href={route('logout')} method="post" as="button"
+                        className="rounded-xl mx-1 p-3 text-sm font-medium flex items-center gap-4 transition-colors duration-200 hover:bg-red-500/10 hover:text-red-400 w-full"
+                    >
+                        <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span className={`transition-all duration-300 whitespace-nowrap ${sidebarLocked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>Cerrar sesión</span>
+                    </Link>
+                </div>
             </div>
         </aside>
     );

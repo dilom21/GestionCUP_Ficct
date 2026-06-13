@@ -54,6 +54,7 @@ app/
 │   └── Requests/
 │       ├── StoreUsuarioRequest.php
 │       ├── UpdateUsuarioRequest.php
+│       ├── ImportUsuariosRequest.php
 │       ├── StoreRolRequest.php
 │       ├── UpdateRolRequest.php
 │       ├── StoreCarreraRequest.php
@@ -74,6 +75,10 @@ app/
 │   ├── DirectorCarrera.php       # Directores de carrera
 │   ├── PostulacionDocente.php    # Postulaciones docentes
 │   └── ... (otros modelos)
+├── Imports/
+│   └── UsuariosImport.php        # Importación masiva Excel/CSV (CU2)
+├── Jobs/
+│   └── EnviarCredencialesUsuarioJob.php  # Envío cola de credenciales
 ├── Services/
 │   ├── SupabaseStorageService.php # Subida/descarga de documentos
 │   ├── BitacoraService.php       # Registro centralizado de auditoría
@@ -200,13 +205,23 @@ Cada permiso sigue el formato: `{entidad}.{accion}` donde:
 
 **Controlador:** `UsuarioController.php`
 **Vista:** `Usuarios/Index.jsx`
-**Requests:** `StoreUsuarioRequest.php`, `UpdateUsuarioRequest.php`
+**Requests:** `StoreUsuarioRequest.php`, `UpdateUsuarioRequest.php`, `ImportUsuariosRequest.php`
 
 **Operaciones:**
 - **Listar:** Muestra usuarios con su rol (join con tabla rol), ordenado por apellidos
 - **Crear:** Hash de contraseña con `Hash::make()`, registra en bitácora
 - **Actualizar:** Solo actualiza password si se proporciona uno nuevo. Bitácora
 - **Eliminar:** **Borrado lógico** → cambia estado a `'Inactivo'`. Bitácora
+- **Importar Masivamente:** Sube Excel/CSV vía `POST /usuarios/importar`
+  - Archivo: `ImportUsuariosRequest` (CSV/XLSX/XLS, ≤5MB)
+  - Procesamiento: `UsuariosImport` (maatwebsite/excel) — lee columnas `Nombre, Apellido, Correo, Rol`
+  - Validación por fila: busca el rol por nombre (case insensitive), verifica correo único
+  - Cada usuario creado se etiqueta con un `import_batch` (UUID)
+  - Se despacha 1 `EnviarCredencialesUsuarioJob` por usuario (cola `database`)
+  - Los correos se envían en segundo plano vía `ResendEmailService`
+  - Los usuarios válidos se crean, los errores se reportan por fila
+  - Botón "Deshacer importación": `DELETE /usuarios/importar/{batch}/deshacer` (hard delete por batch)
+- **Queue:** `QUEUE_CONNECTION=database`. Worker se inicia con `composer dev` o `php artisan queue:work`
 
 ---
 
@@ -472,6 +487,47 @@ POSTULANTE                          ADMINISTRADOR
 
 - **CU11 (Webhook Stripe):** Implementar confirmación real de pagos vía webhook
 - **CU3, CU5, CU7, CU8:** Pendientes de implementación
-- **Módulos sin hijos en sidebarConfig:** Grupos Horarios, Docentes, Cupos, Reportes - no tienen funciones/seeder asociados aún
 - **Confirmación de pago:** Actualmente solo se marca como Pendiente, falta webhook para Confirmado
 - **Faltan más roles en seeder:** Solo Administrador (1) y Postulante (5) tienen seed inicial
+
+### Features Extras
+
+#### 🚀 Explorador Visual del CUP
+- **Ruta:** `/admin/explorador-cup`
+- **Controlador:** `ExploradorCupController.php`
+- **Vista:** `Admin/ExploradorCup/Index.jsx`
+- **Widgets:**
+  - **Embudo de Admisión:** Barra horizontal con 5 etapas con tooltip y porcentajes
+  - **Mapa de Calor:** Matriz Materia × Grupo con celdas coloreadas por promedio
+  - **Rendimiento por Materia:** ScatterChart con burbujas (tamaño = estudiantes)
+  - **Timeline de Actividad:** Feed animado de últimas acciones
+- **Características:** 7 KPIs, selector de gestión, reordenamiento con flechas, colapsables
+
+#### 🔔 Centro de Notificaciones
+- **Tabla:** `notificacion` (icono, título, mensaje, tipo, leída, created_at)
+- **Controlador:** `NotificacionController.php`
+- **Componente:** `PanelNotificaciones.jsx` en Navbar
+- **Características:** Badge con contador, dropdown, polling 30s, marcar leídas
+
+#### 🖥️ Sala de Situación en Tiempo Real
+- **Ruta:** `/admin/sala-situacion`
+- **Controlador:** `Admin\SalaSituacionController.php`
+- **Vista:** `Admin/SalaSituacion/Index.jsx`
+- **Componentes:** `KpiGlow` (contadores animados), `FeedTicker` (ticker horizontal infinito), `BarrasCiudades` (barras por ciudad), `GraficoHora` (barras por hora), `TimelineFlash` (feed vertical con glow)
+- **Características:** Auto-refresh 15seg, dark mode glassmorphism, contadores con spring physics
+
+#### 📋 Kanban Board para Revisión de Documentos
+- **Ruta:** `/admin/postulaciones-postulantes/kanban`
+- **Controlador:** `Admin\PostulacionKanbanController.php`
+- **Vista:** `Admin/PostulacionesPostulantes/Kanban.jsx`
+- **Componentes:** `KanbanBoard` (DndContext), `KanbanColumn` (droppable), `KanbanCard` (sortable)
+- **Características:** Drag & drop entre 5 columnas, optimistic update, animaciones, contadores por columna
+
+#### 🛤️ Trayectorias del Postulante (Timeline Visual)
+- **Ruta pública:** `/trayectoria/{token}` (vista pública sin auth)
+- **Ruta admin:** `/admin/trayectorias` (buscador + timeline)
+- **Controlador:** `TrayectoriaController.php`
+- **Vista pública:** `Trayectoria/Publica.jsx`
+- **Vista admin:** `Admin/Trayectorias/Index.jsx`
+- **Componente:** `TimelineNodo` (nodo animado con check de completado)
+- **Características:** 7 etapas del ciclo de vida, barra de progreso, animación secuencial al scrollear

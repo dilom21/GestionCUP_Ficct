@@ -81,6 +81,8 @@ Route::post('/logout', [AuthManualController::class, 'cerrarSesion'])->name('log
 
 Route::post('/stripe/webhook', [PagoController::class, 'handleWebhook'])->name('stripe.webhook');
 
+Route::get('/trayectoria/{token}', [\App\Http\Controllers\TrayectoriaController::class, 'publica'])->name('trayectoria.publica');
+
 /*
 |--------------------------------------------------------------------------
 | Paneles según rol (protegidos por middleware de sesión)
@@ -132,9 +134,40 @@ Route::middleware('auth.sesion')->group(function () {
     Route::post('/admin/postulaciones-docentes/{id}/cambiar-estado', [PostulacionDocenteRevisionController::class, 'cambiarEstado'])->middleware('permiso:postulaciones_docentes.escribir')->name('admin.postulaciones.docentes.cambiar-estado');
 
     Route::get('/admin/postulaciones-postulantes', [PostulacionPostulanteRevisionController::class, 'index'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulaciones.postulantes');
+
+    // Kanban de postulaciones (ANTES de {id} para que no lo capture como parámetro)
+    Route::get('/admin/postulaciones-postulantes/kanban', [\App\Http\Controllers\Admin\PostulacionKanbanController::class, 'index'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulaciones.kanban');
+    Route::post('/admin/kanban/tablero', [\App\Http\Controllers\Admin\PostulacionKanbanController::class, 'tablero'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.kanban.tablero');
+    Route::post('/admin/kanban/mover/{id}', [\App\Http\Controllers\Admin\PostulacionKanbanController::class, 'mover'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.kanban.mover');
+
     Route::get('/admin/postulaciones-postulantes/{id}', [PostulacionPostulanteRevisionController::class, 'show'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulaciones.postulantes.show');
-    Route::post('/admin/postulaciones-postulantes/{id}/guardar-revision', [PostulacionPostulanteRevisionController::class, 'guardarRevision'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulaciones.postulantes.guardar-revision');
-    Route::post('/admin/postulaciones-postulantes/{id}/cambiar-estado', [PostulacionPostulanteRevisionController::class, 'cambiarEstado'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulaciones.postulantes.cambiar-estado');
+
+    // Trayectorias
+    Route::get('/admin/trayectorias', [\App\Http\Controllers\TrayectoriaController::class, 'adminIndex'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.trayectorias.index');
+    Route::post('/admin/trayectorias/buscar', [\App\Http\Controllers\TrayectoriaController::class, 'buscar'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.trayectorias.buscar');
+
+    Route::get('/admin/reportes', [\App\Http\Controllers\Admin\ReporteController::class, 'index'])->middleware('permiso:reportes.leer')->name('admin.reportes.index');
+    Route::post('/admin/reportes/generar', [\App\Http\Controllers\Admin\ReporteController::class, 'generar'])->middleware('permiso:reportes.leer')->name('admin.reportes.generar');
+    Route::post('/admin/reportes/exportar/csv', [\App\Http\Controllers\Admin\ReporteController::class, 'exportarCsv'])->middleware('permiso:reportes.escribir')->name('admin.reportes.exportar.csv');
+    Route::post('/admin/reportes/exportar/pdf', [\App\Http\Controllers\Admin\ReporteController::class, 'exportarPdf'])->middleware('permiso:reportes.escribir')->name('admin.reportes.exportar.pdf');
+    Route::post('/admin/reportes/exportar/excel', [\App\Http\Controllers\Admin\ReporteController::class, 'exportarExcel'])->middleware('permiso:reportes.escribir')->name('admin.reportes.exportar.excel');
+
+    Route::get('/admin/consultavoz/historial', [\App\Http\Controllers\Admin\ConsultaVozController::class, 'historial'])->middleware('permiso:reportes.leer')->name('admin.consultavoz.historial');
+    Route::post('/admin/consultavoz/procesar', [\App\Http\Controllers\Admin\ConsultaVozController::class, 'procesar'])->middleware('permiso:reportes.leer')->name('admin.consultavoz.procesar');
+
+    // Explorador CUP
+    Route::get('/admin/explorador-cup', [\App\Http\Controllers\Admin\ExploradorCupController::class, 'index'])->middleware('permiso:reportes.leer')->name('admin.explorador-cup.index');
+    Route::post('/admin/explorador-cup/datos', [\App\Http\Controllers\Admin\ExploradorCupController::class, 'datos'])->middleware('permiso:reportes.leer')->name('admin.explorador-cup.datos');
+
+    // Sala de Situación
+    Route::get('/admin/sala-situacion', [\App\Http\Controllers\Admin\SalaSituacionController::class, 'index'])->middleware('permiso:reportes.leer')->name('admin.sala-situacion.index');
+    Route::post('/admin/sala-situacion/estadisticas', [\App\Http\Controllers\Admin\SalaSituacionController::class, 'estadisticas'])->middleware('permiso:reportes.leer')->name('admin.sala-situacion.estadisticas');
+
+    // Notificaciones AJAX
+    Route::get('/admin/notificaciones', [\App\Http\Controllers\Admin\NotificacionController::class, 'index'])->middleware('auth.sesion')->name('admin.notificaciones.index');
+    Route::get('/admin/notificaciones/no-leidas', [\App\Http\Controllers\Admin\NotificacionController::class, 'noLeidas'])->middleware('auth.sesion')->name('admin.notificaciones.no-leidas');
+    Route::post('/admin/notificaciones/{id}/leida', [\App\Http\Controllers\Admin\NotificacionController::class, 'marcarLeida'])->middleware('auth.sesion')->name('admin.notificaciones.marcar-leida');
+    Route::post('/admin/notificaciones/todas-leidas', [\App\Http\Controllers\Admin\NotificacionController::class, 'marcarTodasLeidas'])->middleware('auth.sesion')->name('admin.notificaciones.todas-leidas');
 
     Route::get('/admin/postulaciones-postulantes/documentos/{documento}/descargar', function (Request $request, DocumentoPostulacionPostulante $documento) {
         try {
@@ -229,6 +262,8 @@ Route::middleware('auth.sesion')->group(function () {
     Route::post('/usuarios', [UsuarioController::class, 'store'])->middleware('permiso:usuarios.escribir')->name('usuarios.store');
     Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->middleware('permiso:usuarios.escribir')->name('usuarios.update');
     Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->middleware('permiso:usuarios.escribir')->name('usuarios.destroy');
+    Route::post('/usuarios/importar', [UsuarioController::class, 'importar'])->middleware('permiso:usuarios.escribir')->name('usuarios.importar');
+    Route::delete('/usuarios/importar/{batch}/deshacer', [UsuarioController::class, 'deshacerImportacion'])->middleware('permiso:usuarios.escribir')->name('usuarios.importar.deshacer');
 
     /*
     |--------------------------------------------------------------------------

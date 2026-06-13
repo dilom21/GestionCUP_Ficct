@@ -70,4 +70,9 @@ class Postulacion extends Model
     {
         return $this->hasMany(Pago::class, 'id_postulacion', 'id');
     }
+
+    public function inscripcionCup()
+    {
+        return $this->hasOne(InscripcionCup::class, 'id_postulacion');
+    }
 }

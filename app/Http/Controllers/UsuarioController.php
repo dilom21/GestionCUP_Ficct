@@ -5,11 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Rol;
 use App\Models\Bitacora;
+use App\Http\Requests\ImportUsuariosRequest;
 use App\Http\Requests\StoreUsuarioRequest;
 use App\Http\Requests\UpdateUsuarioRequest;
+use App\Imports\UsuariosImport;
+use App\Jobs\EnviarCredencialesUsuarioJob;
+use App\Services\BitacoraService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UsuarioController extends Controller
 {
@@ -103,5 +109,55 @@ class UsuarioController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Usuario dado de baja exitosamente.');
+    }
+
+    public function importar(ImportUsuariosRequest $request)
+    {
+        $archivo = $request->file('archivo');
+        $batchId = (string) Str::uuid();
+
+        $import = new UsuariosImport($batchId);
+
+        try {
+            Excel::import($import, $archivo);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Error al procesar el archivo: ' . $e->getMessage());
+        }
+
+        $creados = $import->getCreados();
+        $errores = $import->getErrores();
+
+        foreach ($creados as $item) {
+            EnviarCredencialesUsuarioJob::dispatch($item['usuario'], $item['passwordPlano']);
+        }
+
+        if (count($creados) > 0) {
+            BitacoraService::registrar(
+                "IMPORTACIÓN MASIVA — " . count($creados) . " usuarios creados (batch: {$batchId})",
+                Auth::id() ?? 1,
+                'USUARIO'
+            );
+        }
+
+        return redirect()->back()->with('import_resultado', [
+            'import_batch' => $batchId,
+            'creados'      => $creados,
+            'errores'      => $errores,
+            'total_creados' => count($creados),
+            'total_errores' => count($errores),
+        ]);
+    }
+
+    public function deshacerImportacion(string $batch)
+    {
+        $eliminados = User::where('import_batch', $batch)->delete();
+
+        BitacoraService::registrar(
+            "IMPORTACIÓN DESHECHA — {$eliminados} usuarios eliminados (batch: {$batch})",
+            Auth::id() ?? 1,
+            'USUARIO'
+        );
+
+        return redirect()->back()->with('success', "Importación deshecha. {$eliminados} usuarios eliminados.");
     }
 }
