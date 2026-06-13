@@ -160,7 +160,23 @@ class PagoController extends Controller
         $idPostulacion = $request->input('id_postulacion');
         $sessionId = $request->input('session_id');
 
-        return redirect('/preinscripcion?id=' . $idPostulacion . '&status=success&session_id=' . urlencode($sessionId ?? ''));
+        if ($sessionId && $idPostulacion) {
+            try {
+                Stripe::setApiKey(config('services.stripe.secret'));
+                $session = Session::retrieve($sessionId);
+                if ($session->payment_status === 'paid') {
+                    $this->procesarConfirmacionPago($session->id, $idPostulacion);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error verificando sesión Stripe en pagoExito', [
+                    'session_id' => $sessionId,
+                    'id_postulacion' => $idPostulacion,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return redirect('/preinscripcion?id=' . $idPostulacion . '&status=success');
     }
 
     public function pagoCancelado(Request $request)
@@ -204,111 +220,117 @@ class PagoController extends Controller
                 return response('Missing id_postulacion in metadata', 400);
             }
 
-            try {
-                DB::beginTransaction();
-
-                $pago = Pago::where('cod_transaccion', $session->id)->first();
-                if (!$pago) {
-                    Log::warning('Stripe webhook: pago no encontrado para sesión', ['session_id' => $session->id]);
-                    DB::rollBack();
-                    return response('Pago no encontrado', 404);
-                }
-
-                if ($pago->estado_pago === 'Confirmado') {
-                    DB::rollBack();
-                    return response('Pago ya confirmado', 200);
-                }
-
-                $pago->update(['estado_pago' => 'Confirmado']);
-
-                $postulacion = Postulacion::with('postulante')->findOrFail($idPostulacion);
-
-                $postulacion->update([
-                    'estado_postulacion' => 'Aprobado',
-                    'token_pago'         => null,
-                ]);
-
-                $postulante = $postulacion->postulante;
-
-                $password = Str::random(12);
-
-                $usuario = Usuario::create([
-                    'nombre'    => $postulante->nombre,
-                    'apellidos' => $postulante->apellidos,
-                    'correo'    => $postulante->correo,
-                    'password'  => Hash::make($password),
-                    'id_rol'    => 5,
-                    'telefono'  => $postulante->telefono,
-                    'estado'    => 'Activo',
-                ]);
-
-                $postulante->update(['id_usuario' => $usuario->id]);
-
-                DB::commit();
-
-                try {
-                    $resendService = new ResendEmailService();
-                    $nombreCompleto = e($postulante->nombre . ' ' . $postulante->apellidos);
-                    $loginUrl = url('/login');
-                    $html = <<<HTML
-                    <h1>Inscripción Confirmada - CUP FICCT</h1>
-                    <p>Hola, <strong>{$nombreCompleto}</strong>.</p>
-                    <p>Tu pago ha sido <strong>confirmado</strong> y tu inscripción al <strong>Curso Preuniversitario FICCT</strong> está completa.</p>
-                    <p>A continuación, tus credenciales de acceso al sistema:</p>
-                    <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
-                        <p><strong>Usuario:</strong> {$postulante->correo}</p>
-                        <p><strong>Contraseña:</strong> {$password}</p>
-                    </div>
-                    <p style="text-align:center;margin:30px 0;">
-                        <a href='{$loginUrl}' style='display:inline-block;padding:14px 32px;background:#059669;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;'>Ingresar al sistema</a>
-                    </p>
-                    <p style="color:#666;font-size:13px;">Recomendamos cambiar tu contraseña después del primer inicio de sesión.</p>
-                    <hr>
-                    <p style="color:#666;font-size:12px;">Curso Preuniversitario FICCT — Facultad de Ciencias de la Computación y Telecomunicaciones</p>
-                    HTML;
-
-                    $resendService->enviar($postulante->correo, 'Credenciales de acceso - CUP FICCT', $html);
-                } catch (\Throwable $e) {
-                    Log::error('No se pudo enviar correo con credenciales.', [
-                        'error' => $e->getMessage(),
-                        'id_postulacion' => $idPostulacion,
-                    ]);
-                }
-
-                BitacoraService::registrar(
-                    "Pago confirmado vía webhook Stripe - Postulación #{$idPostulacion}",
-                    null,
-                    'pago'
-                );
-
-                BitacoraService::registrar(
-                    "Postulación #{$idPostulacion} aceptada - pago confirmado",
-                    null,
-                    'postulacion'
-                );
-
-                BitacoraService::registrar(
-                    "Usuario postulante creado automáticamente - {$postulante->correo}",
-                    $usuario->id,
-                    'usuario'
-                );
-
-                Log::info('Webhook Stripe procesado exitosamente', [
-                    'session_id' => $session->id,
-                    'id_postulacion' => $idPostulacion,
-                    'id_usuario_creado' => $usuario->id,
-                ]);
-            } catch (\Throwable $e) {
-                DB::rollBack();
-                Log::error('Error procesando webhook Stripe: ' . $e->getMessage(), [
-                    'session_id' => $session->id,
-                    'id_postulacion' => $idPostulacion,
-                    'trace' => $e->getTraceAsString(),
-                ]);
-                return response('Error processing webhook', 500);
-            }
+            $this->procesarConfirmacionPago($session->id, $idPostulacion);
         }
 
         return response('Webhook received', 200);
+    }
+
+    private function procesarConfirmacionPago(string $sessionId, int $idPostulacion): bool
+    {
+        try {
+            DB::beginTransaction();
+
+            $pago = Pago::where('cod_transaccion', $sessionId)->first();
+            if (!$pago) {
+                Log::warning('Pago no encontrado para sesión', ['session_id' => $sessionId]);
+                DB::rollBack();
+                return false;
+            }
+
+            if ($pago->estado_pago === 'Confirmado') {
+                DB::rollBack();
+                return true;
+            }
+
+            $pago->update(['estado_pago' => 'Confirmado']);
+
+            $postulacion = Postulacion::with('postulante')->findOrFail($idPostulacion);
+            $postulacion->update([
+                'estado_postulacion' => 'Aprobado',
+                'token_pago'         => null,
+            ]);
+
+            $postulante = $postulacion->postulante;
+
+            $password = Str::random(12);
+
+            $usuario = Usuario::create([
+                'nombre'    => $postulante->nombre,
+                'apellidos' => $postulante->apellidos,
+                'correo'    => $postulante->correo,
+                'password'  => Hash::make($password),
+                'id_rol'    => 5,
+                'telefono'  => $postulante->telefono,
+                'estado'    => 'Activo',
+            ]);
+
+            $postulante->update(['id_usuario' => $usuario->id]);
+
+            DB::commit();
+
+            try {
+                $resendService = new ResendEmailService();
+                $nombreCompleto = e($postulante->nombre . ' ' . $postulante->apellidos);
+                $loginUrl = url('/login');
+                $html = <<<HTML
+                <h1>Inscripción Confirmada - CUP FICCT</h1>
+                <p>Hola, <strong>{$nombreCompleto}</strong>.</p>
+                <p>Tu pago ha sido <strong>confirmado</strong> y tu inscripción al <strong>Curso Preuniversitario FICCT</strong> está completa.</p>
+                <p>A continuación, tus credenciales de acceso al sistema:</p>
+                <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
+                    <p><strong>Usuario:</strong> {$postulante->correo}</p>
+                    <p><strong>Contraseña:</strong> {$password}</p>
+                </div>
+                <p style="text-align:center;margin:30px 0;">
+                    <a href='{$loginUrl}' style='display:inline-block;padding:14px 32px;background:#059669;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;'>Ingresar al sistema</a>
+                </p>
+                <p style="color:#666;font-size:13px;">Recomendamos cambiar tu contraseña después del primer inicio de sesión.</p>
+                <hr>
+                <p style="color:#666;font-size:12px;">Curso Preuniversitario FICCT — Facultad de Ciencias de la Computación y Telecomunicaciones</p>
+                HTML;
+
+                $resendService->enviar($postulante->correo, 'Credenciales de acceso - CUP FICCT', $html);
+            } catch (\Throwable $e) {
+                Log::error('No se pudo enviar correo con credenciales.', [
+                    'error' => $e->getMessage(),
+                    'id_postulacion' => $idPostulacion,
+                ]);
+            }
+
+            BitacoraService::registrar(
+                "Pago confirmado - Postulación #{$idPostulacion}",
+                $usuario->id,
+                'pago'
+            );
+
+            BitacoraService::registrar(
+                "Postulación #{$idPostulacion} aceptada - pago confirmado",
+                $usuario->id,
+                'postulacion'
+            );
+
+            BitacoraService::registrar(
+                "Usuario postulante creado automáticamente - {$postulante->correo}",
+                $usuario->id,
+                'usuario'
+            );
+
+            Log::info('Pago procesado exitosamente', [
+                'session_id' => $sessionId,
+                'id_postulacion' => $idPostulacion,
+                'id_usuario_creado' => $usuario->id,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Error procesando confirmación de pago: ' . $e->getMessage(), [
+                'session_id' => $sessionId,
+                'id_postulacion' => $idPostulacion,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return false;
+        }
     }
 }
