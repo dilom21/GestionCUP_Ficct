@@ -141,55 +141,90 @@ class PostulacionPostulanteRevisionController extends Controller
         }
 
         $postulacion->update($dataUpdate);
+        $postulacion->refresh();
 
-        if ($nuevoEstado === 'Aprobado' && $postulacion->turno) {
-            $gestion = GestionCup::orderBy('id')->first();
-            if ($gestion) {
-                $yaInscrito = InscripcionCup::where('id_postulacion', $postulacion->id)->exists();
-                if (!$yaInscrito) {
-                    $gruposDelTurno = Grupo::where('turno', $postulacion->turno)
-                        ->where('estado', 'Activo')
-                        ->orderBy('sigla')
-                        ->get();
+        if ($nuevoEstado === 'Aprobado') {
+            try {
+                // Obtener la gestión CUP activa o la más reciente
+                $gestion = GestionCup::orderBy('id', 'desc')->first();
 
-                    $grupoAsignado = null;
-                    $capacidadMax = 80;
-                    foreach ($gruposDelTurno as $grupo) {
-                        $inscritos = InscripcionCup::where('id_grupo', $grupo->id)->count();
-                        if ($inscritos < ($grupo->cupo_maximo ?: $capacidadMax)) {
-                            $grupoAsignado = $grupo;
-                            break;
-                        }
-                    }
-
-                    if (!$grupoAsignado) {
-                        $prefijo = ['Mañana' => 'M', 'Tarde' => 'T', 'Noche' => 'N'][$postulacion->turno] ?? 'X';
-                        $numExistentes = Grupo::where('turno', $postulacion->turno)->count();
-                        $letra = chr(65 + $numExistentes);
-                        $grupoAsignado = Grupo::create([
-                            'id_gestion_cup' => $gestion->id,
-                            'sigla'          => $prefijo . $letra,
-                            'cupo_maximo'    => $capacidadMax,
-                            'turno'          => $postulacion->turno,
-                            'modalidad'      => 'Presencial',
-                            'estado'         => 'Activo',
-                        ]);
-                    }
-
-                    InscripcionCup::create([
-                        'id_postulacion'    => $postulacion->id,
-                        'id_grupo'          => $grupoAsignado->id,
-                        'id_gestion_cup'    => $gestion->id,
-                        'fecha_inscripcion' => now(),
-                        'estado'            => 'Inscrito',
+                if (!$gestion) {
+                    Log::warning('No se encontró ninguna gestión CUP al aprobar postulación', [
+                        'id_postulacion' => $postulacion->id,
                     ]);
-
-                    BitacoraService::registrar(
-                        "Postulante asignado al grupo {$grupoAsignado->sigla} (turno {$postulacion->turno})",
-                        session('usuario_id'),
-                        'inscripcion_cup'
-                    );
+                    return back()->with('error', 'No hay una gestión CUP activa. No se pudo asignar al grupo.');
                 }
+
+                // Verificar si ya está inscrito
+                $yaInscrito = InscripcionCup::where('id_postulacion', $postulacion->id)->exists();
+                if ($yaInscrito) {
+                    return back()->with('success', 'Postulación aprobada. El postulante ya estaba inscrito en un grupo.');
+                }
+
+                // Obtener el turno del postulante
+                $turno = $postulacion->turno;
+                if (empty($turno)) {
+                    Log::warning('Postulación aprobada sin turno asignado', [
+                        'id_postulacion' => $postulacion->id,
+                    ]);
+                    return back()->with('error', 'El postulante no tiene un turno asignado. No se pudo asignar al grupo.');
+                }
+
+                // Buscar grupos disponibles según el turno
+                $grupoAsignado = Grupo::where('turno', $turno)
+                    ->where('estado', 'Activo')
+                    ->orderBy('sigla')
+                    ->get()
+                    ->first(function ($grupo) {
+                        $inscritos = InscripcionCup::where('id_grupo', $grupo->id)->count();
+                        return $inscritos < ($grupo->cupo_maximo ?: 80);
+                    });
+
+                // Si no hay grupo con cupo, crear uno nuevo
+                if (!$grupoAsignado) {
+                    $prefijo = ['Mañana' => 'M', 'Tarde' => 'T', 'Noche' => 'N'][$turno] ?? 'X';
+                    $numExistentes = Grupo::where('turno', $turno)->count();
+                    $letra = chr(65 + ($numExistentes % 26));
+                    $sigla = $prefijo . $letra;
+
+                    $grupoAsignado = Grupo::create([
+                        'id_gestion_cup' => $gestion->id,
+                        'sigla'          => $sigla,
+                        'cupo_maximo'    => 80,
+                        'turno'          => $turno,
+                        'modalidad'      => 'Presencial',
+                        'estado'         => 'Activo',
+                    ]);
+                }
+
+                // Insertar en inscripcion_cup
+                InscripcionCup::create([
+                    'id_postulacion'    => $postulacion->id,
+                    'id_grupo'          => $grupoAsignado->id,
+                    'id_gestion_cup'    => $gestion->id,
+                    'fecha_inscripcion' => now(),
+                    'estado'            => 'Inscrito',
+                ]);
+
+                BitacoraService::registrar(
+                    "Postulante aprobado y asignado al grupo {$grupoAsignado->sigla} (turno {$turno})",
+                    session('usuario_id'),
+                    'inscripcion_cup'
+                );
+
+                Log::info('Postulante asignado a grupo CUP exitosamente', [
+                    'id_postulacion' => $postulacion->id,
+                    'grupo' => $grupoAsignado->sigla,
+                    'turno' => $turno,
+                ]);
+
+            } catch (\Throwable $e) {
+                Log::error('Error al asignar postulante a grupo CUP', [
+                    'id_postulacion' => $postulacion->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                return back()->with('error', 'Error al asignar grupo: ' . $e->getMessage());
             }
         }
 
@@ -238,7 +273,7 @@ class PostulacionPostulanteRevisionController extends Controller
                     <h1>Postulación Aprobada</h1>
                     <p>Hola, <strong>{$nombrePostulante}</strong>.</p>
                     <p>Tu postulación ha sido <strong>aprobada</strong> y tu inscripción al <strong>Curso Preuniversitario FICCT</strong> está completa.</p>
-                    <p>Tu grupo asignado es el <strong>" . e($postulacion->inscripcion?->grupo?->sigla ?? 'pendiente de asignación') . "</strong>.</p>
+                    <p>Tu grupo asignado es el <strong>" . e($postulacion->inscripcionCup?->grupo?->sigla ?? 'pendiente de asignación') . "</strong>.</p>
                     <p>Próximos pasos:</p>
                     <ul>
                         <li>Revisa tu horario de clases en el sistema.</li>

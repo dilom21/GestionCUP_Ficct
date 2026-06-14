@@ -109,12 +109,6 @@ class AuthManualController extends Controller
             ])->onlyInput('correo');
         }
 
-        if (strtolower($rol->nombre) === 'postulante') {
-            return back()->withErrors([
-                'correo' => 'Los postulantes no pueden acceder al panel institucional.',
-            ])->onlyInput('correo');
-        }
-
         // Obtener permisos del rol
         $permisos = $rol->getPermisosArray();
 

@@ -140,6 +140,8 @@ Route::middleware('auth.sesion')->group(function () {
     Route::post('/admin/kanban/tablero', [\App\Http\Controllers\Admin\PostulacionKanbanController::class, 'tablero'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.kanban.tablero');
     Route::post('/admin/kanban/mover/{id}', [\App\Http\Controllers\Admin\PostulacionKanbanController::class, 'mover'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.kanban.mover');
 
+    Route::post('/admin/postulaciones-postulantes/{id}/guardar-revision', [PostulacionPostulanteRevisionController::class, 'guardarRevision'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulaciones.postulantes.guardar-revision');
+    Route::post('/admin/postulaciones-postulantes/{id}/cambiar-estado', [PostulacionPostulanteRevisionController::class, 'cambiarEstado'])->middleware('permiso:postulaciones_postulantes.escribir')->name('admin.postulaciones.postulantes.cambiar-estado');
     Route::get('/admin/postulaciones-postulantes/{id}', [PostulacionPostulanteRevisionController::class, 'show'])->middleware('permiso:postulaciones_postulantes.leer')->name('admin.postulaciones.postulantes.show');
 
     // Trayectorias
