@@ -30,7 +30,7 @@ class InscripcionCupServiceTest extends TestCase
             $table->increments('id');
             $table->string('turno')->nullable();
         });
-
+        
         Schema::create('grupo', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('id_gestion_cup');
