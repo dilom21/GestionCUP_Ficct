@@ -8,6 +8,7 @@ use App\Models\Pago;
 use App\Models\Postulacion;
 use App\Models\User as Usuario;
 use App\Services\BitacoraService;
+use App\Services\InscripcionCupService;
 use App\Services\ResendEmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -239,7 +240,9 @@ class PagoController extends Controller
             }
 
             if ($pago->estado_pago === 'Confirmado') {
-                DB::rollBack();
+                $postulacion = Postulacion::findOrFail($idPostulacion);
+                app(InscripcionCupService::class)->inscribir($postulacion);
+                DB::commit();
                 return true;
             }
 
@@ -251,6 +254,7 @@ class PagoController extends Controller
                 'token_pago'         => null,
             ]);
 
+            $inscripcion = app(InscripcionCupService::class)->inscribir($postulacion);
             $postulante = $postulacion->postulante;
 
             $password = Str::random(12);
@@ -320,6 +324,8 @@ class PagoController extends Controller
                 'session_id' => $sessionId,
                 'id_postulacion' => $idPostulacion,
                 'id_usuario_creado' => $usuario->id,
+                'id_inscripcion_cup' => $inscripcion->id,
+                'grupo_asignado' => $inscripcion->grupo?->sigla,
             ]);
 
             return true;
